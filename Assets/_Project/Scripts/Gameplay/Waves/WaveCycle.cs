@@ -5,6 +5,7 @@ using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Domain.Gameplay.Interfaces;
 using _Project.Scripts.Gameplay.Upgrades;
 using _Project.Scripts.Services;
+using _Project.Scripts.Services.Network;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Zenject;
@@ -17,17 +18,21 @@ namespace _Project.Scripts.Gameplay.Waves
         [Inject] private IWaveSpawner _waveSpawner;
         [Inject] private SignalBus _signalBus;
         [Inject] private PlayerRegistry _playerRegistry;
+        [Inject] private FusionNetworkService _networkService;
+        
+        private bool _cycleStarted;
 
+        public bool IsAuthoritative =>
+            _networkService != null || !_networkService.IsRunning || _networkService.IsServer;
+        
         public event Action<WaveConfig> OnWaveStart;
         public event Action OnWaveComplete;
-
-        private bool _cycleStarted;
 
         public void Awake()
         {
             _playerRegistry.OnPlayerRegistered += OnplayerRegistered;
             //_signalBus.Subscribe<PlayerSpawnedSignal>(OnPlayerSpawned);
-            if (_playerRegistry.HasPlayer && !_cycleStarted)
+            if (_playerRegistry.HasPlayer && !_cycleStarted && IsAuthoritative)
             {
                 _cycleStarted = true;
                 StartCycle();
@@ -36,7 +41,7 @@ namespace _Project.Scripts.Gameplay.Waves
         
         private void OnplayerRegistered(GameObject player)
         {
-            if(_cycleStarted) return;
+            if(_cycleStarted || !IsAuthoritative) return;
             _cycleStarted = true;
             StartCycle();
         }

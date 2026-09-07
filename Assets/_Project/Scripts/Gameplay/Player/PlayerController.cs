@@ -16,10 +16,17 @@ namespace _Project.Scripts.Gameplay.Player
         private CharacterController _controller;
         private PlayerIntent _intent;
         private float _verticalVelocity;
-        
-        public PlayerIntent CurrentIntent => _intent;
 
-        private void Awake() => _controller = GetComponent<CharacterController>();
+        public PlayerIntent Intent
+        {
+            get => _intent;
+            set => _intent = value; 
+        }
+
+        private void Awake()
+        {
+            _controller = GetComponent<CharacterController>();
+        }
 
         private void Update()
         {
@@ -51,18 +58,19 @@ namespace _Project.Scripts.Gameplay.Player
             _controller.Move(velocity * Time.deltaTime);
         }
 
-        public void OnMove(InputValue value) 
-            => _intent.Move = value.Get<Vector2>();
-
-        public void OnJump(InputValue value)
-        {
-            if (value.isPressed)
-                _intent.Jump = true;
-        }
-
-        public void OnSprint(InputValue value)
-        {
-            _intent.Sprint = value.isPressed;
-        }
+        //todo: delete it after bridge done
+        // public void OnMove(InputValue value) 
+        //     => _intent.Move = value.Get<Vector2>();
+        //
+        // public void OnJump(InputValue value)
+        // {
+        //     if (value.isPressed)
+        //         _intent.Jump = true;
+        // }
+        //
+        // public void OnSprint(InputValue value)
+        // {
+        //     _intent.Sprint = value.isPressed;
+        // }
     }
 }

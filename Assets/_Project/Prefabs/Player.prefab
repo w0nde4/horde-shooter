@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: -1654246992977757909}
   - component: {fileID: 1842460465426237157}
   - component: {fileID: 2651462876878950146}
+  - component: {fileID: 4273782779646948410}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -409,6 +410,18 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours: []
   ForceRemoteRenderTimeframe: 0
+--- !u!114 &4273782779646948410
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5125678495412439949}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae2a85e03aa94ef5b4ff9f91f37aaf3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Gameplay.Unity::_Project.Scripts.Gameplay.Player.PlayerInputBridge
 --- !u!1 &5685956427076205347
 GameObject:
   m_ObjectHideFlags: 0

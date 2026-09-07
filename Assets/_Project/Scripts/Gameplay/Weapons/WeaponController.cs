@@ -14,6 +14,14 @@ namespace _Project.Scripts.Gameplay.Weapons
         private int _currentWeaponIndex = -1;
         private PlayerIntent _intent;
         private bool _firePressedThisFrame;
+        
+        public PlayerIntent Intent
+        {
+            get => _intent;
+            set => _intent = value; 
+        }
+        public int CurrentIndex => _currentWeaponIndex;
+        public int TotalWeapons => weapons.Length;
 
         private void Start()
         {
@@ -69,45 +77,46 @@ namespace _Project.Scripts.Gameplay.Weapons
                 _firePressedThisFrame = false;
         }
 
-        public void OnFire(InputValue value)
-        {
-            var pressed = value.isPressed;
-            _intent.Fire = pressed;
-            if (value.isPressed)
-                _firePressedThisFrame = true;
-        }
-
-        public void OnReload(InputValue value)
-        {
-            if (value.isPressed)
-                _intent.Reload = true;
-        }
-
-        public void OnWeaponOne(InputValue value)
-        {
-            if (value.isPressed) _intent.WeaponSwitchIndex = 0;
-        }
-    
-        public void OnWeaponTwo(InputValue value)
-        {
-            if (value.isPressed) _intent.WeaponSwitchIndex = 1;
-        }
-
-        public void OnNextWeapon(InputValue value)
-        {
-            if (!value.isPressed) return;
-        
-            var nextIndex = (_currentWeaponIndex + 1) % weapons.Length;
-            _intent.WeaponSwitchIndex = nextIndex;
-        }
-    
-        public void OnPreviousWeapon(InputValue value)
-        {
-            if (!value.isPressed) return;
-        
-            var prevIndex = (_currentWeaponIndex - 1 + weapons.Length) % weapons.Length;
-            _intent.WeaponSwitchIndex = prevIndex;
-        }
+        //todo: delete it after bridge done
+        // public void OnFire(InputValue value)
+        // {
+        //     var pressed = value.isPressed;
+        //     _intent.Fire = pressed;
+        //     if (value.isPressed)
+        //         _firePressedThisFrame = true;
+        // }
+        //
+        // public void OnReload(InputValue value)
+        // {
+        //     if (value.isPressed)
+        //         _intent.Reload = true;
+        // }
+        //
+        // public void OnWeaponOne(InputValue value)
+        // {
+        //     if (value.isPressed) _intent.WeaponSwitchIndex = 0;
+        // }
+        //
+        // public void OnWeaponTwo(InputValue value)
+        // {
+        //     if (value.isPressed) _intent.WeaponSwitchIndex = 1;
+        // }
+        //
+        // public void OnNextWeapon(InputValue value)
+        // {
+        //     if (!value.isPressed) return;
+        //
+        //     var nextIndex = (_currentWeaponIndex + 1) % weapons.Length;
+        //     _intent.WeaponSwitchIndex = nextIndex;
+        // }
+        //
+        // public void OnPreviousWeapon(InputValue value)
+        // {
+        //     if (!value.isPressed) return;
+        //
+        //     var prevIndex = (_currentWeaponIndex - 1 + weapons.Length) % weapons.Length;
+        //     _intent.WeaponSwitchIndex = prevIndex;
+        // }
 
         public void SwitchWeapon(int newIndex)
         {

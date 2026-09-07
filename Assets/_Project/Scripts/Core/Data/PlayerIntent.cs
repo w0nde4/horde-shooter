@@ -2,9 +2,10 @@
 
 namespace _Project.Scripts.Core.Data
 {
-    public struct PlayerIntent
+    public class PlayerIntent
     {
         public Vector2 Move;
+        public Vector2 Look;
         public bool Fire;
         public bool Grenade;
         public bool Reload;

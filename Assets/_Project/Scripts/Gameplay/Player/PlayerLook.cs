@@ -1,4 +1,5 @@
-﻿using _Project.Scripts.Domain.Gameplay.Configs;
+﻿using _Project.Scripts.Core.Data;
+using _Project.Scripts.Domain.Gameplay.Configs;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Zenject;
@@ -14,7 +15,13 @@ namespace _Project.Scripts.Gameplay.Player
         [Inject] private PlayerConfig _playerConfig;
 
         private float _xRotation;
-        private Vector2 _lookInput;
+        private PlayerIntent _intent;
+        
+        public PlayerIntent Intent
+        {
+            get => _intent;
+            set => _intent = value; 
+        }
 
         private void Start()
         {
@@ -36,8 +43,8 @@ namespace _Project.Scripts.Gameplay.Player
         {
             if (cameraTransform == null) return;
 
-            var mouseX = _lookInput.x * _playerConfig.mouseSensitivity * Time.deltaTime;
-            var mouseY = _lookInput.y * _playerConfig.mouseSensitivity * Time.deltaTime * (_playerConfig.invertY ? 1f : -1f);
+            var mouseX = _intent.Look.x * _playerConfig.mouseSensitivity * Time.deltaTime;
+            var mouseY = _intent.Look.y * _playerConfig.mouseSensitivity * Time.deltaTime * (_playerConfig.invertY ? 1f : -1f);
 
             playerBody.Rotate(Vector3.up * mouseX);
 
@@ -47,7 +54,8 @@ namespace _Project.Scripts.Gameplay.Player
             cameraTransform.localRotation = Quaternion.Euler(_xRotation, 0f, 0f);
         }
     
-        public void OnLook(InputValue value) 
-            => _lookInput = value.Get<Vector2>();
+        //todo: delete it after bridge done
+        // public void OnLook(InputValue value) 
+        //     => _lookInput = value.Get<Vector2>();
     }
 }

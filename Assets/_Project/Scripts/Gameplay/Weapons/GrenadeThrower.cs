@@ -21,6 +21,12 @@ namespace _Project.Scripts.Gameplay.Weapons
         
         private PlayerIntent _intent;
         private float _lastThrowTime = -Mathf.Infinity;
+        
+        public PlayerIntent Intent
+        {
+            get => _intent;
+            set => _intent = value; 
+        }
 
         private void Start()
         {
@@ -37,12 +43,13 @@ namespace _Project.Scripts.Gameplay.Weapons
             }
         }
         
-        public void OnGrenade(InputValue value)
-        {
-            if (!CanThrow()) return;
-            if (value.isPressed)
-                _intent.Grenade = true;
-        }
+        //todo: delete it after bridge done
+        // public void OnGrenade(InputValue value)
+        // {
+        //     if (!CanThrow()) return;
+        //     if (value.isPressed)
+        //         _intent.Grenade = true;
+        // }
 
         private bool CanThrow()
         {

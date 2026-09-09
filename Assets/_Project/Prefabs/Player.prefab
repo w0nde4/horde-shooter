@@ -361,6 +361,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eff22ad30001409b816cb8abd49fa229, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Installers::_Project.Scripts.Installers.PlayerInstaller
+  playerStatsConfig: {fileID: 11400000, guid: 3a76aada267643e40af71efb3970e05c, type: 2}
 --- !u!114 &2651462876878950146
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -59,8 +59,7 @@ namespace _Project.Scripts.Services.Network
             }
 
             var inputAuthority = PlayerRef.FromEncoded(playerRefRaw.Value);
-            var spawned = runner.Spawn(networkObject, position, rotation, inputAuthority,
-                onBeforeSpawned: (r, obj) => _diContainer.InjectGameObject(obj.gameObject));
+            var spawned = runner.Spawn(networkObject, position, rotation, inputAuthority);
             
             if (spawned == null) return null;
             

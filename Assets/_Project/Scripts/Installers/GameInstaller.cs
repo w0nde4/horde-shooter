@@ -15,7 +15,6 @@ namespace _Project.Scripts.Installers
     {
         [SerializeField] private WaveCycleConfig waveCycleConfig;
         [SerializeField] private WaveSpawnerConfig waveSpawnerConfig;
-        [SerializeField] private PlayerStatsConfig playerStatsConfig;
         [SerializeField] private PlayerConfig playerConfig;
         [SerializeField] private bool useNetwork;
 
@@ -27,9 +26,6 @@ namespace _Project.Scripts.Installers
                 .AsSingle();
             Container.Bind<WaveSpawnerConfig>()
                 .FromInstance(waveSpawnerConfig)
-                .AsSingle();
-            Container.Bind<PlayerStatsConfig>()
-                .FromInstance(playerStatsConfig)
                 .AsSingle();
             Container.Bind<PlayerConfig>()
                 .FromInstance(playerConfig)

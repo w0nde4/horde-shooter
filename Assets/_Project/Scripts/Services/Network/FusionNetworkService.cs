@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using _Project.Scripts.Core.Signals;
+using _Project.Scripts.Domain.Gameplay;
 using Cysharp.Threading.Tasks;
 using Fusion;
 using Fusion.Sockets;
@@ -15,8 +16,10 @@ namespace _Project.Scripts.Services.Network
         private NetworkRunner _runner;
         private NetworkSceneManagerDefault _sceneManager;
         private bool _isRunning;
+        private ZenjectNetworkObjectProvider _provider;
         
         [Inject] private SignalBus _signalBus;
+        [Inject] private DiContainer _container;
         
         public bool IsRunning => _runner != null && _runner.IsRunning;
         public bool IsServer => _runner != null && _runner.IsServer;
@@ -28,6 +31,9 @@ namespace _Project.Scripts.Services.Network
             _runner = go.AddComponent<NetworkRunner>();
             _runner.AddCallbacks(this);
             _sceneManager = go.AddComponent<NetworkSceneManagerDefault>();
+
+            _provider = _container.InstantiateComponent<ZenjectNetworkObjectProvider>(go);
+            
             UnityEngine.Object.DontDestroyOnLoad(go);
         }
         
@@ -50,7 +56,8 @@ namespace _Project.Scripts.Services.Network
                 GameMode = gameMode,
                 SessionName = sessionName,
                 SceneManager = _sceneManager,
-                PlayerCount = 2
+                PlayerCount = 2,
+                ObjectProvider = _provider
             };
             
             if (setScene) args.Scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex);

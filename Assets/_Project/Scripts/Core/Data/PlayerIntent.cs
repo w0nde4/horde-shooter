@@ -2,7 +2,7 @@
 
 namespace _Project.Scripts.Core.Data
 {
-    public class PlayerIntent
+    public struct PlayerIntent
     {
         public Vector2 Move;
         public Vector2 Look;

@@ -946,10 +946,10 @@ PlayerSettings:
   activeInputHandler: 2
   windowsGamepadBackendHint: 0
   enableDirectStorage: 0
-  cloudProjectId: 05110782-6fee-4533-9b9b-d01ab8d85910
+  cloudProjectId: cd527a56-c34c-4992-9a22-b0150eb3fc1f
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: horde shooter 2026-08-28_11-52-16
+  projectName: horde shooter
   organizationId: oleg7kmmravg
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0

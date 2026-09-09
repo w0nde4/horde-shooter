@@ -125,7 +125,6 @@ GameObject:
   - component: {fileID: 77783759944993419}
   - component: {fileID: 2322780206119984574}
   - component: {fileID: 6241918651247207227}
-  - component: {fileID: 8495626740449775213}
   - component: {fileID: 1376657489692710802}
   - component: {fileID: 3141427690294134319}
   - component: {fileID: 6495453147609108392}
@@ -134,7 +133,7 @@ GameObject:
   - component: {fileID: -1654246992977757909}
   - component: {fileID: 1842460465426237157}
   - component: {fileID: 2651462876878950146}
-  - component: {fileID: 4273782779646948410}
+  - component: {fileID: 7140986638733162026}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -263,36 +262,6 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &8495626740449775213
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5125678495412439949}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
-  m_Actions: {fileID: -944628639613478452, guid: 2512a9c3c9ebb5540b40caf287dca3c4, type: 3}
-  m_NotificationBehavior: 0
-  m_UIInputModule: {fileID: 0}
-  m_DeviceLostEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_DeviceRegainedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_ControlsChangedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_ActionEvents: []
-  m_NeverAutoSwitchControlSchemes: 0
-  m_DefaultControlScheme: 
-  m_DefaultActionMap: Player
-  m_SplitScreenIndex: -1
-  m_Camera: {fileID: 4839609978384243410}
 --- !u!114 &1376657489692710802
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -361,6 +330,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrenadeThrower
   grenadeConfig: {fileID: 11400000, guid: e3a2de0dd6cce8f478fc3e2137d706a5, type: 2}
   throwOrigin: {fileID: 1768644694414532070}
+  networkGrenadePrefab: {fileID: -11560518358656108, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
 --- !u!114 &-1654246992977757909
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -407,10 +377,16 @@ MonoBehaviour:
   SendPriority: 1
   EnableInterpolation: 1
   Flags: 262146
-  NestedObjects: []
-  NetworkedBehaviours: []
+  NestedObjects:
+  - {fileID: 562760056424397569}
+  NetworkedBehaviours:
+  - {fileID: 1376657489692710802}
+  - {fileID: 3141427690294134319}
+  - {fileID: 6495453147609108392}
+  - {fileID: 5858196557044132213}
+  - {fileID: 7140986638733162026}
   ForceRemoteRenderTimeframe: 0
---- !u!114 &4273782779646948410
+--- !u!114 &7140986638733162026
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -419,9 +395,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 5125678495412439949}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ae2a85e03aa94ef5b4ff9f91f37aaf3e, type: 3}
+  m_Script: {fileID: 11500000, guid: cfbe69d1d3a8471caee64cec778a73c1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Gameplay.Unity::_Project.Scripts.Gameplay.Player.PlayerInputBridge
+  m_EditorClassIdentifier: Gameplay.Unity::PlayerInputHandler
+  inputActionAsset: {fileID: -944628639613478452, guid: 2512a9c3c9ebb5540b40caf287dca3c4, type: 3}
 --- !u!1 &5685956427076205347
 GameObject:
   m_ObjectHideFlags: 0
@@ -757,6 +734,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7836572987271988976}
     m_Modifications:
+    - target: {fileID: -11560518358656108, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
+      propertyPath: Flags
+      value: 262402
+      objectReference: {fileID: 0}
+    - target: {fileID: -11560518358656108, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
+      propertyPath: SortKey
+      value: 1323780769
+      objectReference: {fileID: 0}
+    - target: {fileID: -11560518358656108, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
+      propertyPath: NetworkedBehaviours.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -11560518358656108, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
+      propertyPath: 'NetworkedBehaviours.Array.data[0]'
+      value: 
+      objectReference: {fileID: 9079813604627546061}
+    - target: {fileID: -11560518358656108, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
+      propertyPath: 'NetworkedBehaviours.Array.data[1]'
+      value: 
+      objectReference: {fileID: 1530854781539433564}
     - target: {fileID: 1698056052845220, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
       propertyPath: m_Name
       value: RGD-5
@@ -806,8 +803,41 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
+--- !u!114 &562760056424397569 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: -11560518358656108, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
+  m_PrefabInstance: {fileID: 8654157681317404821}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+--- !u!114 &1530854781539433564 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7865271625593773257, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
+  m_PrefabInstance: {fileID: 8654157681317404821}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cd6ab728bee4acb8663b202c8bd1bbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Grenade
 --- !u!4 &8653156962070042543 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4379243761268538, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
   m_PrefabInstance: {fileID: 8654157681317404821}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &9079813604627546061 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 439176636356697944, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
+  m_PrefabInstance: {fileID: 8654157681317404821}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform

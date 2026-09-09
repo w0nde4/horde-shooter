@@ -1,38 +1,69 @@
-﻿using _Project.Scripts.Core.Interfaces;
+﻿using System;
+using _Project.Scripts.Core.Interfaces;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using Cysharp.Threading.Tasks;
+using Fusion;
 using UnityEngine;
 using Zenject;
 
 namespace _Project.Scripts.Gameplay.Weapons
 {
-    public class Grenade : MonoBehaviour
+    public class Grenade : NetworkBehaviour
     {
         [Inject] private IDamageService _damageService;
         
         private GrenadeConfig _config;
         private bool _exploded;
+        
+        [Networked] private TickTimer _explosionTimer { get; set; }
 
         public void Initialize(GrenadeConfig config)
         {
-            this._config = config;
-            ExplosionTimerAsync().Forget();
+            _config = config;
+            
+            if (Runner != null && Runner.IsRunning)
+            {
+                if (HasInputAuthority && !_explosionTimer.IsRunning)
+                {
+                    _explosionTimer = TickTimer.CreateFromSeconds(Runner, _config.explosionDelay);
+                }
+            }
+            else
+            {
+                ExplosionTimerAsync().Forget();
+            }
         }
 
         private async UniTask ExplosionTimerAsync()
         {
             await UniTask.Delay(
-                System.TimeSpan.FromSeconds(_config.explosionDelay),
+                TimeSpan.FromSeconds(_config.explosionDelay),
                 cancellationToken: this.GetCancellationTokenOnDestroy()
             );
+            
+            if(Runner == null || !Runner.IsRunning) Explode();
+        }
 
-            Explode();
+        public override void FixedUpdateNetwork()
+        {
+            if (HasStateAuthority && !_exploded &&  _explosionTimer.Expired(Runner))
+            {
+                _explosionTimer = TickTimer.None;
+                Explode();
+            }
         }
 
         private void Explode()
         {
             if (_exploded) return;
             _exploded = true;
+
+            if (_config == null)
+            {
+                Debug.LogError("Grenade: Config missing on Explode!");
+                HandleDestruction();
+                return;
+            }
 
             var hits = Physics.OverlapSphere(transform.position, _config.explosionRadius, _config.damageableLayers);
             foreach (var hit in hits)
@@ -42,18 +73,28 @@ namespace _Project.Scripts.Gameplay.Weapons
                 
                 var hitPoint = hit.ClosestPoint(transform.position);
                 var hitNormal = (hit.transform.position - transform.position).normalized;
-                                
+                if (_damageService == null) Debug.LogError("Grenade: DamageService is null!");
                 _damageService?.ApplyDamage(_config.explosionDamage, damageable, hitPoint, hitNormal, gameObject);
-                
-                //knockback effect (works only for rigidbodies)
-                //going to add force for enemies and player (non rigidbodies)
-                // var rb = hit.GetComponent<Rigidbody>();
-                // if (rb != null)
-                //     rb.AddExplosionForce(500f, transform.position, config.explosionRadius, 1f, ForceMode.Impulse);
             }
 
-            Debug.Log("Boom!");
-            Destroy(gameObject);
+            Debug.Log(Runner != null && Runner.IsRunning ? "Server Boom!" : "Offline Boom!");
+
+            HandleDestruction();
+        }
+        
+        private void HandleDestruction()
+        {
+            if (Runner != null && Runner.IsRunning)
+            {
+                if (HasStateAuthority)
+                {
+                    Runner.Despawn(Object);
+                }
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
     }
 }

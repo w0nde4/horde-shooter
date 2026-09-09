@@ -23,7 +23,7 @@ namespace _Project.Scripts.Gameplay.Waves
         private bool _cycleStarted;
 
         public bool IsAuthoritative =>
-            _networkService != null || !_networkService.IsRunning || _networkService.IsServer;
+            _networkService == null || !_networkService.IsRunning || _networkService.IsServer;
         
         public event Action<WaveConfig> OnWaveStart;
         public event Action OnWaveComplete;

@@ -16,7 +16,7 @@ MonoBehaviour:
   sprintMultiplier: 2
   jumpHeight: 1.5
   gravity: -9.81
-  mouseSensitivity: 30
+  mouseSensitivity: 10
   minPitch: -80
   maxPitch: 80
   invertY: 0

@@ -1,26 +1,33 @@
-﻿using _Project.Scripts.Core.Data;
+﻿using System.Diagnostics;
+using _Project.Scripts.Core.Data;
 using _Project.Scripts.Domain.Gameplay.Configs;
+using _Project.Scripts.Domain.Gameplay.Data;
+using Fusion;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Zenject;
 
 namespace _Project.Scripts.Gameplay.Player
 {
-    public class PlayerLook : MonoBehaviour
+    public class PlayerLook : NetworkBehaviour
     {
+        private const float PixelsToDegreesScale = 0.022f;
+        
         [Header("References")]
         [SerializeField] private Transform playerBody;
         [SerializeField] private Transform cameraTransform;
 
         [Inject] private PlayerConfig _playerConfig;
+        
 
         private float _xRotation;
+        private float _yRotation;
+        
         private PlayerIntent _intent;
         
         public PlayerIntent Intent
         {
             get => _intent;
-            set => _intent = value; 
+            set => _intent = value;
         }
 
         private void Start()
@@ -31,20 +38,78 @@ namespace _Project.Scripts.Gameplay.Player
             if (playerBody == null)
                 playerBody = transform;
 
-            if (cameraTransform != null) return;
-            var cam = GetComponentInChildren<Camera>();
-            if (cam != null)
-                cameraTransform = cam.transform;
-            else
-                Debug.LogError("PlayerLook: Camera not found! Assign cameraTransform manually.");
+            if (cameraTransform == null)
+                cameraTransform = GetComponentInChildren<Camera>()?.transform;
+        }
+        
+        public override void FixedUpdateNetwork()
+        {
+            if (GetInput(out NetworkInputData input))
+            {
+                ProcessLookData(input.Look);
+
+                if (!HasInputAuthority && cameraTransform != null)
+                {
+                    cameraTransform.localRotation = Quaternion.Euler(_xRotation, 0f, 0f);
+                }
+            }
         }
 
         private void Update()
         {
             if (cameraTransform == null) return;
 
-            var mouseX = _intent.Look.x * _playerConfig.mouseSensitivity * Time.deltaTime;
-            var mouseY = _intent.Look.y * _playerConfig.mouseSensitivity * Time.deltaTime * (_playerConfig.invertY ? 1f : -1f);
+            if (Runner != null && Runner.IsRunning)
+            {
+                if (HasInputAuthority)
+                {
+                    var inputHandler = GetComponent<PlayerInputHandler>();
+                    if (inputHandler != null)
+                    {
+                        ProcessLookData(inputHandler.RawMouseAccumulated);
+                        cameraTransform.localRotation = Quaternion.Euler(_xRotation, 0f, 0f);
+                    }
+                }
+                return; 
+            }
+
+            ApplyOfflineLook();
+        }
+
+        private void ProcessLookData(Vector2 rawAccumulatedMouse)
+        {
+            var finalSensitivity = _playerConfig.mouseSensitivity * PixelsToDegreesScale;
+            
+            _yRotation = rawAccumulatedMouse.x * finalSensitivity;
+            
+            var rawPitch = rawAccumulatedMouse.y * finalSensitivity;
+            _xRotation = rawPitch * (_playerConfig.invertY ? 1f : -1f);
+            
+            _xRotation = Mathf.Clamp(_xRotation, _playerConfig.minPitch, _playerConfig.maxPitch);
+            
+            var inputHandler = GetComponent<PlayerInputHandler>();
+            if (inputHandler != null)
+            {
+                var minRaw = _playerConfig.minPitch / (finalSensitivity * (_playerConfig.invertY ? 1f : -1f));
+                var maxRaw = _playerConfig.maxPitch / (finalSensitivity * (_playerConfig.invertY ? 1f : -1f));
+                
+                if (minRaw > maxRaw) (minRaw, maxRaw) = (maxRaw, minRaw);
+
+                inputHandler.ClampVerticalBuffer(minRaw, maxRaw);
+            }
+
+            if (playerBody != null)
+            {
+                playerBody.rotation = Quaternion.Euler(0, _yRotation, 0);
+            }
+        }
+        
+        private void ApplyOfflineLook()
+        {
+            var finalSensitivity = _playerConfig.mouseSensitivity * PixelsToDegreesScale;
+            
+            var mouseX = _intent.Look.x * finalSensitivity;
+            var mouseY = _intent.Look.y * finalSensitivity * (_playerConfig.invertY ? 1f : -1f);
 
             playerBody.Rotate(Vector3.up * mouseX);
 
@@ -56,6 +121,6 @@ namespace _Project.Scripts.Gameplay.Player
     
         //todo: delete it after bridge done
         // public void OnLook(InputValue value) 
-        //     => _lookInput = value.Get<Vector2>();
+        //     => _intent.Look = value.Get<Vector2>();
     }
 }

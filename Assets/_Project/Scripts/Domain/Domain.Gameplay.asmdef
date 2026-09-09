@@ -3,11 +3,14 @@
     "rootNamespace": "",
     "references": [
         "Core",
-        "UniTask"
+        "UniTask",
+        "Unity.Fusion.CodeGen",
+        "Fusion.Unity",
+        "Zenject"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,

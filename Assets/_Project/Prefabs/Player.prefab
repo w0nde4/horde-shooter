@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: 1842460465426237157}
   - component: {fileID: 2651462876878950146}
   - component: {fileID: 7140986638733162026}
+  - component: {fileID: -7426533306110307846}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -377,10 +378,11 @@ MonoBehaviour:
   SortKey: 3498687857
   SendPriority: 1
   EnableInterpolation: 1
-  Flags: 262146
+  Flags: 262402
   NestedObjects:
   - {fileID: 562760056424397569}
   NetworkedBehaviours:
+  - {fileID: -7426533306110307846}
   - {fileID: 1376657489692710802}
   - {fileID: 3141427690294134319}
   - {fileID: 6495453147609108392}
@@ -400,6 +402,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Gameplay.Unity::PlayerInputHandler
   inputActionAsset: {fileID: -944628639613478452, guid: 2512a9c3c9ebb5540b40caf287dca3c4, type: 3}
+--- !u!114 &-7426533306110307846
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5125678495412439949}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 378411a89480da345945c2f888327a2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Unity::Fusion.NetworkCharacterController
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  gravity: -20
+  jumpImpulse: 8
+  acceleration: 500
+  braking: 500
+  maxSpeed: 100
+  rotationSpeed: 0
 --- !u!1 &5685956427076205347
 GameObject:
   m_ObjectHideFlags: 0

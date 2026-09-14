@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using _Project.Scripts.Core.Data;
+﻿using _Project.Scripts.Core.Data;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Domain.Gameplay.Data;
 using Fusion;
@@ -30,6 +29,20 @@ namespace _Project.Scripts.Gameplay.Player
             set => _intent = value;
         }
 
+        public override void Spawned()
+        {
+            if (cameraTransform == null)
+                cameraTransform = GetComponentInChildren<Camera>()?.transform;
+            
+            if (HasInputAuthority) return;
+            
+            var remoteCamera = GetComponentInChildren<Camera>();
+            var remoteListener = GetComponentInChildren<AudioListener>();
+
+            if (remoteCamera != null) remoteCamera.enabled = false;
+            if (remoteListener != null) remoteListener.enabled = false;
+        }
+
         private void Start()
         {
             Cursor.lockState = CursorLockMode.Locked;
@@ -37,9 +50,6 @@ namespace _Project.Scripts.Gameplay.Player
         
             if (playerBody == null)
                 playerBody = transform;
-
-            if (cameraTransform == null)
-                cameraTransform = GetComponentInChildren<Camera>()?.transform;
         }
         
         public override void FixedUpdateNetwork()
@@ -118,9 +128,5 @@ namespace _Project.Scripts.Gameplay.Player
 
             cameraTransform.localRotation = Quaternion.Euler(_xRotation, 0f, 0f);
         }
-    
-        //todo: delete it after bridge done
-        // public void OnLook(InputValue value) 
-        //     => _intent.Look = value.Get<Vector2>();
     }
 }

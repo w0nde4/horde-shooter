@@ -48,11 +48,11 @@ namespace _Project.Scripts.Installers
         
             // === Signals ===
             SignalBusInstaller.Install(Container);
-            Container.DeclareSignal<PlayerSpawnedSignal>();
-            Container.DeclareSignal<PlayerJoinRequestSignal>();
-            Container.DeclareSignal<PlayerLeaveRequestSignal>();
-            Container.DeclareSignal<ShotFiredSignal>();
-            Container.DeclareSignal<DamageAppliedSignal>();
+            Container.DeclareSignal<PlayerSpawnedSignal>().OptionalSubscriber();
+            Container.DeclareSignal<PlayerJoinRequestSignal>().OptionalSubscriber();
+            Container.DeclareSignal<PlayerLeaveRequestSignal>().OptionalSubscriber();
+            Container.DeclareSignal<ShotFiredSignal>().OptionalSubscriber();
+            Container.DeclareSignal<DamageAppliedSignal>().OptionalSubscriber();
         }
     }
 }

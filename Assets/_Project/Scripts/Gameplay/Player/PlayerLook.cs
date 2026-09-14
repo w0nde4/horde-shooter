@@ -16,8 +16,9 @@ namespace _Project.Scripts.Gameplay.Player
         [SerializeField] private Transform cameraTransform;
 
         [Inject] private PlayerConfig _playerConfig;
-        
 
+        [Networked] private float _networkedXRotation { get; set; }
+        
         private float _xRotation;
         private float _yRotation;
         
@@ -58,6 +59,11 @@ namespace _Project.Scripts.Gameplay.Player
             {
                 ProcessLookData(input.Look);
 
+                if (HasInputAuthority)
+                {
+                    _networkedXRotation = _xRotation;   
+                }
+                
                 if (!HasInputAuthority && cameraTransform != null)
                 {
                     cameraTransform.localRotation = Quaternion.Euler(_xRotation, 0f, 0f);
@@ -78,6 +84,7 @@ namespace _Project.Scripts.Gameplay.Player
                     {
                         ProcessLookData(inputHandler.RawMouseAccumulated);
                         cameraTransform.localRotation = Quaternion.Euler(_xRotation, 0f, 0f);
+                        _networkedXRotation = _xRotation;
                     }
                 }
                 return; 

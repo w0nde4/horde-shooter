@@ -77,7 +77,14 @@ namespace _Project.Scripts.Gameplay.Waves
                 MinSpawnRadius = _config.minSpawnRadius,
                 MaxSpawnRadius = _config.maxSpawnRadius,
                 Speed = wave.enemySpeed,
-                PlayerLayer = _config.playerLayer
+                PlayerLayer = _config.playerLayer,
+                OnSetupObject = (enemyGameObject) =>
+                {
+                    if (enemyGameObject.TryGetComponent<EnemyBrain>(out var brain))
+                    {
+                        brain.SetSpeed(wave.enemySpeed);
+                    }
+                }
             };
             
             var enemyObj = await _enemySpawnService.SpawnEnemyAsync(ctx);

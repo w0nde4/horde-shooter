@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace _Project.Scripts.Domain.Gameplay.Data
 {
@@ -11,5 +12,7 @@ namespace _Project.Scripts.Domain.Gameplay.Data
         public float MaxSpawnRadius;
         public float Speed;
         public LayerMask PlayerLayer;
+
+        public Action<GameObject> OnSetupObject;
     }
 }

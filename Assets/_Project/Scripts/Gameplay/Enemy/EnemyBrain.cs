@@ -1,16 +1,19 @@
 ﻿using _Project.Scripts.Gameplay.Enemy.States;
+using Fusion;
 using UnityEngine;
 using UnityEngine.AI;
 
 namespace _Project.Scripts.Gameplay.Enemy
 {
-    public class EnemyBrain : MonoBehaviour
+    public class EnemyBrain : NetworkBehaviour
     {
         [Header("References")]
         [SerializeField] private EnemyCombat combat;
         [SerializeField] private LayerMask playerLayer;
         [SerializeField] private float detectionRadius = 100f;
 
+        [Networked] private float _networkSpeed { get; set; } 
+        
         private NavMeshAgent _agent;
         private EnemyState _currentState;
 
@@ -27,6 +30,13 @@ namespace _Project.Scripts.Gameplay.Enemy
         private void Awake()
         {
             _agent = GetComponent<NavMeshAgent>();
+            
+            if (_agent != null)
+            {
+                _agent.updatePosition = false;
+                _agent.updateRotation = false;
+            }
+
             if (combat == null)
                 combat = GetComponent<EnemyCombat>();
 
@@ -40,14 +50,55 @@ namespace _Project.Scripts.Gameplay.Enemy
             AttackEnemyState = new AttackEnemyState(this);
         }
 
+        public override void Spawned()
+        {
+            if (Runner != null && Runner.IsRunning && !HasStateAuthority)
+            {
+                if (_agent != null) _agent.enabled = false;
+                if (combat != null) combat.enabled = false;
+                if(TryGetComponent<EnemyHealth>(out var health))
+                {
+                    health.enabled = false;
+                }
+
+                enabled = false;
+                return;
+            }
+
+            if (Object.HasStateAuthority && _agent != null && _networkSpeed > 0)
+            {
+                _agent.speed = _networkSpeed;
+            }
+            
+            ChangeState(IdleEnemyState); 
+        }
+
         private void Start()
         {
-            ChangeState(IdleEnemyState);
+            if (Runner == null || !Runner.IsRunning)
+            {
+                ChangeState(IdleEnemyState);
+            }
         }
 
         private void Update()
         {
             _currentState?.Update();
+        }
+        
+        public override void FixedUpdateNetwork()
+        {
+            if (!HasStateAuthority || _agent == null || !_agent.enabled) return;
+
+            var nextPosition = _agent.nextPosition;
+            transform.position = nextPosition;
+            _agent.velocity = _agent.desiredVelocity; 
+            
+            if (_agent.desiredVelocity.sqrMagnitude > 0.01f)
+            {
+                var targetRotation = Quaternion.LookRotation(_agent.desiredVelocity.normalized);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Runner.DeltaTime * 10f);
+            }
         }
 
         public void ChangeState(EnemyState newState)
@@ -102,6 +153,19 @@ namespace _Project.Scripts.Gameplay.Enemy
             }
 
             return nearest;
+        }
+
+        public void SetSpeed(float speed)
+        {
+            if (Object != null && Object.HasStateAuthority)
+            {
+                _networkSpeed = speed;
+            }
+
+            if (_agent != null)
+            {
+                _agent.speed = speed;
+            }
         }
 
         public void OnDeath()

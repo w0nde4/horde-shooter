@@ -28,14 +28,8 @@ namespace _Project.Scripts.Installers
             Container.Bind<IDamageService>()
                 .To<CombatService>()
                 .AsSingle();
-            Container.Bind<ISpawnService>()
-                .To<SpawnService>()
-                .AsSingle();
             Container.Bind<IShootingService>()
                 .To<ShootingService>()
-                .AsSingle();
-            Container.Bind<IEnemySpawnService>()
-                .To<EnemySpawnService>()
                 .AsSingle();
             Container.Bind<IUpgradeChoiceProvider>()
                 .To<UpgradeChoiceProviderStub>()

@@ -37,11 +37,17 @@ namespace _Project.Scripts.Installers
                 Container.Bind<IPlayerSpawnService>()
                     .To<NetworkPlayerSpawnService>()
                     .AsSingle();
+                Container.Bind<ISpawnService>()
+                    .To<FusionSpawnService>()
+                    .AsSingle();
             }
             else
             {
                 Container.Bind<IPlayerSpawnService>()
                     .To<OfflinePlayerSpawnService>()
+                    .AsSingle();
+                Container.Bind<ISpawnService>()
+                    .To<OfflineSpawnService>()
                     .AsSingle();
             }
             
@@ -49,16 +55,16 @@ namespace _Project.Scripts.Installers
             Container.Bind<PlayerRegistry>()
                 .AsSingle()
                 .NonLazy();
-            Container.Bind<ISpawnService>()
-                .To<SpawnService>()
-                .AsSingle();
             Container.BindInterfacesAndSelfTo<NetworkPlayerSpawnHandler>()
                 .AsSingle()
                 .NonLazy();
             
-            // === Interfaces for waves/upgrades ===
+            // === Interfaces for waves/enemies/upgrades ===
             Container.Bind<IWaveOrchestrator>()
                 .To<WaveOrchestrator>()
+                .AsSingle();
+            Container.Bind<IEnemySpawnService>()
+                .To<EnemySpawnService>()
                 .AsSingle();
             Container.Bind<IWaveSpawner>()
                 .To<WaveSpawner>()

@@ -36,17 +36,17 @@ namespace _Project.Scripts.Services
             }
 
             // === 3. Instantiate the enemy prefab through ISpawnService ===
-            var enemyObj = await _spawnService.SpawnAsync(ctx.PrefabAddress, spawnPos, Quaternion.identity);
+            var enemyObj = await _spawnService.SpawnAsync(
+                ctx.PrefabAddress, 
+                spawnPos, 
+                Quaternion.identity,
+                onBeforeSpawn: ctx.OnSetupObject
+                );
             if (enemyObj == null)
             {
                 Debug.LogError($"Failed to instantiate enemy from address {ctx.PrefabAddress}");
                 return null;
             }
-
-            // === 4. Setup NavMeshAgent ===
-            var agent = enemyObj.GetComponent<NavMeshAgent>(); 
-            if (agent != null)
-                agent.speed = ctx.Speed;
 
             return enemyObj;
         }

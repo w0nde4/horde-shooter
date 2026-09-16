@@ -1,51 +1,68 @@
 ﻿using System;
 using _Project.Scripts.Core.Interfaces;
 using _Project.Scripts.Domain.Gameplay;
+using Fusion;
 using UnityEngine;
 using Zenject;
 
 namespace _Project.Scripts.Gameplay.Player
 {
-    public class PlayerHealth : MonoBehaviour, IDamageable, IInitializable
+    public class PlayerHealth : NetworkBehaviour, IDamageable, IInitializable
     {
         [Inject] private PlayerStats _playerStats;
     
-        private float _currentHealth;
+        [Networked]
+        [OnChangedRender(nameof(OnHealthNetworkChanged))]
+        private float CurrentHealth { get; set; }
         
         public event Action<float, float> OnHealthChanged; //current,max
         public event Action OnDeath;
 
         public void Initialize()
         {
-            _currentHealth = _playerStats.MaxHealth;
             _playerStats.OnStatsChanged += OnStatsChanged;
         }
 
+        public override void Spawned()
+        {
+            if (Object.HasStateAuthority)
+            {
+                CurrentHealth = _playerStats.MaxHealth;
+            }
+        }
+        
         private void OnStatsChanged()
         {
-            RefreshMaxHealth();
+            if (HasStateAuthority)
+            {
+                RefreshMaxHealth();
+            }
         }
 
         public void TakeDamage(float damage)
         {
-            _currentHealth -= damage;
-            Debug.Log($"Player took {damage} damage, remaining: {_currentHealth}");
-            OnHealthChanged?.Invoke(_currentHealth, _playerStats.MaxHealth);
+            if (!Object.HasStateAuthority) return;
 
-            if (_currentHealth <= 0f)
+            CurrentHealth -= damage;
+            Debug.Log($"[Server] Player took {damage} damage, remaining: {CurrentHealth}");
+
+            if (CurrentHealth <= 0f)
             {
-                Debug.Log("Player died!");
+                Debug.Log("[Server] Player died!");
                 OnDeath?.Invoke();
-                // Здесь можно добавить смерть игрока (респаун и т.п.)
             }
         }
 
         private void RefreshMaxHealth()
         {
             if (_playerStats == null) return;
-            if(_currentHealth < _playerStats.MaxHealth) _currentHealth = _playerStats.MaxHealth;
-            OnHealthChanged?.Invoke(_currentHealth, _playerStats.MaxHealth);
-            Debug.Log($"Health: {_currentHealth}"); 
+            if(CurrentHealth < _playerStats.MaxHealth) CurrentHealth = _playerStats.MaxHealth;
+            Debug.Log($"Health: {CurrentHealth}"); 
+        }
+        
+        private void OnHealthNetworkChanged()
+        {
+            OnHealthChanged?.Invoke(CurrentHealth, _playerStats.MaxHealth);
         }
     }
 }

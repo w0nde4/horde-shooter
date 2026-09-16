@@ -47,6 +47,7 @@ namespace _Project.Scripts.Installers
             Container.DeclareSignal<PlayerLeaveRequestSignal>().OptionalSubscriber();
             Container.DeclareSignal<ShotFiredSignal>().OptionalSubscriber();
             Container.DeclareSignal<DamageAppliedSignal>().OptionalSubscriber();
+            Container.DeclareSignal<OpenUpgradeUISignal>().OptionalSubscriber();
         }
     }
 }

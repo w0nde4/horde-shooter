@@ -1,14 +1,18 @@
 ﻿using System;
 using _Project.Scripts.Core.Interfaces;
+using Fusion;
 using UnityEngine;
 
 namespace _Project.Scripts.Gameplay.Enemy
 {
-    public class EnemyHealth : MonoBehaviour, IDamageable
+    public class EnemyHealth : NetworkBehaviour, IDamageable
     {
         [SerializeField] private float maxHealth = 100f;
 
-        private float _currentHealth;
+        [Networked]
+        [OnChangedRender(nameof(OnHealthNetworkChanged))]
+        private float CurrentHealth { get; set; }
+        
         private EnemyBrain _brain;
         private UnityEngine.AI.NavMeshAgent _agent; // необязательно, но можно остановить агента
 
@@ -20,21 +24,24 @@ namespace _Project.Scripts.Gameplay.Enemy
             _brain = GetComponent<EnemyBrain>();
             _agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
         }
-
-        private void Start()
+        
+        public override void Spawned()
         {
-            _currentHealth = maxHealth;
+            if (HasStateAuthority)
+            {
+                CurrentHealth = maxHealth;
+            }
         }
 
         public void TakeDamage(float damage)
         {
-            if (_currentHealth <= 0f) return; 
+            if (!HasStateAuthority) return;
+            if (CurrentHealth <= 0f) return; 
 
-            _currentHealth -= damage;
-            OnHealthChanged?.Invoke(_currentHealth, maxHealth);
-            Debug.Log($"Enemy took {damage} damage, remaining: {_currentHealth}");
+            CurrentHealth -= damage;
+            Debug.Log($"[Server] Enemy took {damage} damage, remaining: {CurrentHealth}");
 
-            if (_currentHealth <= 0f)
+            if (CurrentHealth <= 0f)
             {
                 Die();
             }
@@ -42,7 +49,7 @@ namespace _Project.Scripts.Gameplay.Enemy
 
         private void Die()
         {
-            Debug.Log("Enemy died!");
+            Debug.Log("[Server] Enemy died, despawning...");
             OnDeath?.Invoke(this);
 
             if (_brain != null)
@@ -55,7 +62,12 @@ namespace _Project.Scripts.Gameplay.Enemy
             if (collider != null)
                 collider.enabled = false;
 
-            Destroy(gameObject, 0.1f);
+            Runner.Despawn(Object);
+        }
+        
+        private void OnHealthNetworkChanged()
+        {
+            OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
         }
     }
 }

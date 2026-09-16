@@ -13,7 +13,7 @@ namespace _Project.Scripts.Gameplay.Player
         [Inject] private IPlayerSpawnService _playerSpawnService;
         [Inject] private FusionNetworkService _networkService;
 
-        //непонятно зачем этот класс вообще сейчас нужен
+        //todo: решить где находится entry для оффлайн спавна игрока
         // private void Start()
         // {
         //     if(_networkService is { IsRunning: true }) return;

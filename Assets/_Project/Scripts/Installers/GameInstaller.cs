@@ -70,10 +70,6 @@ namespace _Project.Scripts.Installers
                 .To<WaveSpawner>()
                 .FromComponentInHierarchy()
                 .AsSingle();
-            Container.Bind<IUpgradeManager>()
-                .To<UpgradeManager>()
-                .FromComponentInHierarchy()
-                .AsSingle();
 
             // === MonoBehaviour ===
             Container.Bind<WaveCycle>()

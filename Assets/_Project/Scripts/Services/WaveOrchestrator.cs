@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Domain.Gameplay.Interfaces;
@@ -12,7 +13,7 @@ namespace _Project.Scripts.Services
     {
         private readonly WaveCycleConfig _config;
         private readonly IWaveSpawner _waveSpawner;
-        private readonly IUpgradeManager _upgradeManager;
+        private readonly PlayerRegistry _playerRegistry;
         private int _currentWaveIndex;
         private bool _isWaveActive;
         
@@ -20,11 +21,11 @@ namespace _Project.Scripts.Services
         public event Action OnWaveComplete;
 
         [Inject]
-        public WaveOrchestrator(WaveCycleConfig config, IWaveSpawner waveSpawner, IUpgradeManager upgradeManager)
+        public WaveOrchestrator(WaveCycleConfig config, IWaveSpawner waveSpawner, PlayerRegistry playerRegistry)
         {
             _config = config;
             _waveSpawner = waveSpawner;
-            _upgradeManager = upgradeManager;
+            _playerRegistry = playerRegistry;
         }
         
         public async UniTask StartWaveCycle(CancellationToken ct)
@@ -49,10 +50,34 @@ namespace _Project.Scripts.Services
                 OnWaveComplete?.Invoke();
                 Debug.Log($"Wave {wave.waveNumber} completed!");
 
-                _upgradeManager.ShowUpgrades();
-                await UniTask.WaitUntil(() => _upgradeManager.IsUpgradeSelected, cancellationToken: ct);
-                _upgradeManager.ResetSelection();
+                var activeManagers = new List<IUpgradeManager>();
+                foreach (var playerObj in _playerRegistry.Players)
+                {
+                    if (playerObj == null) continue;
+                    var manager = playerObj.GetComponent<IUpgradeManager>();
+                    if (manager != null)
+                    {
+                        activeManagers.Add(manager);
+                    }
+                }
+                
+                Debug.Log($"[Server] Opening upgrades for {activeManagers.Count} players.");
 
+                foreach (var manager in activeManagers)
+                {
+                    manager.ShowUpgrades();
+                }
+
+                var waitTasks = activeManagers.Select(manager =>
+                    UniTask.WaitUntil(() => manager.IsUpgradeSelected, cancellationToken: ct)
+                );
+                await UniTask.WhenAll(waitTasks);
+
+                foreach (var manager in activeManagers)
+                {
+                    manager.ResetSelection();
+                }
+                
                 _currentWaveIndex++;
                 Debug.Log($"Wave index now: {_currentWaveIndex}");
             }

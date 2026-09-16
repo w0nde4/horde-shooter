@@ -1,6 +1,8 @@
 ﻿using _Project.Scripts.Domain.Gameplay;
 using _Project.Scripts.Domain.Gameplay.Configs;
+using _Project.Scripts.Domain.Gameplay.Interfaces;
 using _Project.Scripts.Gameplay.Player;
+using _Project.Scripts.Gameplay.Upgrades;
 using UnityEngine;
 using Zenject;
 
@@ -19,6 +21,10 @@ namespace _Project.Scripts.Installers
                 .FromInstance(playerStatsConfig)
                 .AsSingle();
             Container.BindInterfacesAndSelfTo<PlayerHealth>()
+                .FromComponentOnRoot()
+                .AsSingle();
+            Container.Bind<IUpgradeManager>()
+                .To<UpgradeManager>()
                 .FromComponentOnRoot()
                 .AsSingle();
         }

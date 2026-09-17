@@ -1,50 +1,68 @@
-﻿using System;
-using _Project.Scripts.Core.Data;
+﻿using _Project.Scripts.Core.Data;
 using _Project.Scripts.Core.Interfaces;
 using _Project.Scripts.Core.Signals;
 using _Project.Scripts.Domain.Gameplay;
 using _Project.Scripts.Domain.Gameplay.Configs;
-using Cysharp.Threading.Tasks;
+using _Project.Scripts.Domain.Gameplay.Data;
+using Fusion;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Zenject;
-using Random = UnityEngine.Random;
 
 namespace _Project.Scripts.Gameplay.Weapons
 {
-    public abstract class WeaponBase : MonoBehaviour
+    public abstract class WeaponBase : NetworkBehaviour
     {
+        private const int BulletBufferCapacity = 32;
+        
         [SerializeField] protected WeaponConfig config;
         
         [Inject] private PlayerStats _playerStats;
         [Inject] private SignalBus _signalBus;
         [Inject] private IDamageService _damageService;
         [Inject] private IShootingService _shootingService;
+
+        [Networked] private int NetworkedAmmo { get; set; } 
+        [Networked] private TickTimer ReloadTimer { get; set; }
+        [Networked] private TickTimer FireDelayTimer { get; set; }
+
+        [Networked, Capacity(BulletBufferCapacity)]
+        private NetworkArray<NetworkBulletData> BulletBuffer => default;
+        
+        [Networked, OnChangedRender(nameof(OnBulletCounterChanged))]
+        private int TotalBulletsFiredCounter { get; set; }
     
-        public bool IsReloading => _isReloading;
-        public int CurrentAmmo => _currentAmmo;
+        private int _lastRenderProcessBullets;
+        private Transform _shootOrigin;
+        
+        public bool IsReloading => !ReloadTimer.ExpiredOrNotRunning(Runner);
+        public int CurrentAmmo => NetworkedAmmo;
         public int MagazineSize => config != null ? config.magazineSize : 0;
         public string WeaponName => config != null ? config.weaponName : "Unnamed";
         public bool IsAutomatic => config != null && config.isAutomatic;
 
-        private int _currentAmmo;
-        private bool _isReloading;
-        private float _nextFireTime;
-        private Transform _shootOrigin;
     
         public virtual void Initialize(Transform origin)
         {
             _shootOrigin = origin;
-            _currentAmmo = config.magazineSize;
-            _isReloading = false;
-            _nextFireTime = 0f;
+            NetworkedAmmo = config.magazineSize;
+        }
+
+        public override void Spawned()
+        {
+            _lastRenderProcessBullets = TotalBulletsFiredCounter;
+
+            if (HasStateAuthority && NetworkedAmmo == 0 && config != null)
+            {
+                NetworkedAmmo = config.magazineSize;
+            }
         }
 
         public virtual bool CanFire()
         {
-            if (config == null || _isReloading || _currentAmmo <= 0)
+            if (config == null || IsReloading || NetworkedAmmo <= 0)
                 return false;
-            return Time.time >= _nextFireTime;
+
+            return FireDelayTimer.ExpiredOrNotRunning(Runner);
         }
 
         public virtual void TryFire()
@@ -52,10 +70,11 @@ namespace _Project.Scripts.Gameplay.Weapons
             if (!CanFire()) return;
 
             Fire();
-            _currentAmmo--;
-            _nextFireTime = Time.time + 1f / config.fireRate;
-
-            if (_currentAmmo <= 0)
+            
+            NetworkedAmmo--;
+            FireDelayTimer = TickTimer.CreateFromSeconds(Runner, 1f / config.fireRate);
+            
+            if (NetworkedAmmo <= 0)
                 Reload();
         }
 
@@ -63,32 +82,46 @@ namespace _Project.Scripts.Gameplay.Weapons
 
         public virtual void Reload()
         {
-            if (_isReloading || _currentAmmo == config.magazineSize)
+            if (IsReloading || NetworkedAmmo == config.magazineSize)
                 return;
 
-            ReloadAsync().Forget();
+            Debug.Log($"{WeaponName}: Reloading via network");
+            ReloadTimer = TickTimer.CreateFromSeconds(Runner, config.reloadTime);
         }
 
-        protected virtual async UniTask ReloadAsync()
+        public override void FixedUpdateNetwork()
         {
-            _isReloading = true;
-            Debug.Log($"{WeaponName}: Reloading...");
+            if(!HasStateAuthority) return;
 
-            try
+            if (ReloadTimer.Expired(Runner))
             {
-                await UniTask.Delay(
-                    TimeSpan.FromSeconds(config.reloadTime),
-                    cancellationToken: this.GetCancellationTokenOnDestroy()
-                );
-
-                _currentAmmo = config.magazineSize;
-                Debug.Log($"{WeaponName}: Reload complete.");
-            }
-            finally
-            {
-                _isReloading = false;
+                NetworkedAmmo = config.magazineSize;
+                ReloadTimer = TickTimer.None;
+                Debug.Log($"{WeaponName}: Reload complete via network");
             }
         }
+
+        //todo: delete after network implementation
+        // protected virtual async UniTask ReloadAsync()
+        // {
+        //     _isReloading = true;
+        //     Debug.Log($"{WeaponName}: Reloading...");
+        //
+        //     try
+        //     {
+        //         await UniTask.Delay(
+        //             TimeSpan.FromSeconds(config.reloadTime),
+        //             cancellationToken: this.GetCancellationTokenOnDestroy()
+        //         );
+        //
+        //         _currentAmmo = config.magazineSize;
+        //         Debug.Log($"{WeaponName}: Reload complete.");
+        //     }
+        //     finally
+        //     {
+        //         _isReloading = false;
+        //     }
+        // }
 
         protected ShotResult PerformRaycast()
         {
@@ -100,7 +133,7 @@ namespace _Project.Scripts.Gameplay.Weapons
                 config.hitLayers
                 );
             
-            if(shot.Hit && shot.HitCollider != null)
+            if(HasStateAuthority && shot.Hit && shot.HitCollider != null)
             {
                 var damageable = shot.HitCollider.GetComponent<IDamageable>();
                 if (damageable != null)
@@ -109,8 +142,53 @@ namespace _Project.Scripts.Gameplay.Weapons
                     _damageService?.ApplyDamage(finalDamage, damageable, shot.HitPoint, shot.HitNormal, gameObject);
                 }
             }
-            _signalBus.Fire(new ShotFiredSignal(shot));
+            
+            var bufferIndex = TotalBulletsFiredCounter % BulletBufferCapacity;
+
+            BulletBuffer.Set(bufferIndex, new NetworkBulletData
+            {
+                Hit = shot.Hit,
+                HitPoint = shot.HitPoint
+            });
+            
+            TotalBulletsFiredCounter++;
+
+            if (Runner.IsForward)
+            {
+                TriggerLocalShot(shot.Hit, shot.HitPoint);
+                _lastRenderProcessBullets = TotalBulletsFiredCounter;
+            }
+            
             return shot;
+        }
+
+        private void OnBulletCounterChanged()
+        {
+            if (TotalBulletsFiredCounter > _lastRenderProcessBullets)
+            {
+                var bulletsToProcess = TotalBulletsFiredCounter - _lastRenderProcessBullets;
+
+                for (var i = 0; i < bulletsToProcess; i++)
+                {
+                    var targetIndex = (_lastRenderProcessBullets + i) % BulletBufferCapacity;
+                    var data = BulletBuffer[targetIndex];
+
+                    TriggerLocalShot(data.Hit, data.HitPoint);
+                }
+
+                _lastRenderProcessBullets = TotalBulletsFiredCounter;
+            }
+        }
+
+        private void TriggerLocalShot(bool isHit, Vector3 hitPoint)
+        {
+            var visualShot = new ShotResult
+            {
+                Hit = isHit,
+                HitPoint = hitPoint
+            };
+
+            _signalBus.Fire(new ShotFiredSignal(visualShot));
         }
     }
 }

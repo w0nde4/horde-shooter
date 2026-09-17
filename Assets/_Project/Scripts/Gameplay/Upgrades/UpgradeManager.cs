@@ -17,6 +17,7 @@ namespace _Project.Scripts.Gameplay.Upgrades
         [SerializeField] private int maxChoices = 4;
 
         [Inject] private IUpgradeChoiceProvider _choiceProvider;
+        [Inject] private SignalBus _signalBus;
     
         private List<UpgradeType> _currentChoices = new();
         private PlayerStats _playerStats;

@@ -5,7 +5,6 @@ using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
 using Zenject;
-using Object = UnityEngine.Object;
 
 namespace _Project.Scripts.Domain.Gameplay
 {

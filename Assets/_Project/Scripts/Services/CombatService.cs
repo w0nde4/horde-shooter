@@ -7,8 +7,6 @@ namespace _Project.Scripts.Services
 {
     public class CombatService : IDamageService
     {
-        [Inject] private SignalBus _signalBus;
-
         public void ApplyDamage(float amount, IDamageable target, GameObject source = null)
         {
             ApplyDamage(amount, target, Vector3.zero, Vector3.zero, source);
@@ -18,9 +16,7 @@ namespace _Project.Scripts.Services
             GameObject source = null)
         {
             if (target == null) return;
-            
             target.TakeDamage(amount);
-            _signalBus.Fire(new DamageAppliedSignal(amount, target, hitPoint, hitNormal, source));
         }
     }
 }

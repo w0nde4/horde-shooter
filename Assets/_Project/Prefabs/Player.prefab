@@ -392,7 +392,12 @@ MonoBehaviour:
   - {fileID: 7140986638733162026}
   - {fileID: -8278853204134303090}
   - {fileID: 7911311291239598665}
+  - {fileID: 5731940312175951054}
+  - {fileID: 7766315540652312000}
+  - {fileID: 6950706003988702049}
   - {fileID: 2819564380277222812}
+  - {fileID: 2453252666904181509}
+  - {fileID: 5533155417021003952}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &7140986638733162026
 MonoBehaviour:
@@ -669,6 +674,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: -15
       objectReference: {fileID: 0}
+    - target: {fileID: 7497818315671647182, guid: 6f1a7354265853f44b0ed5e2e43676ad, type: 3}
+      propertyPath: Flags
+      value: 262146
+      objectReference: {fileID: 0}
+    - target: {fileID: 7497818315671647182, guid: 6f1a7354265853f44b0ed5e2e43676ad, type: 3}
+      propertyPath: SortKey
+      value: 234421166
+      objectReference: {fileID: 0}
+    - target: {fileID: 7497818315671647182, guid: 6f1a7354265853f44b0ed5e2e43676ad, type: 3}
+      propertyPath: NetworkedBehaviours.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7497818315671647182, guid: 6f1a7354265853f44b0ed5e2e43676ad, type: 3}
+      propertyPath: 'NetworkedBehaviours.Array.data[0]'
+      value: 
+      objectReference: {fileID: 7911311291239598665}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -679,6 +700,39 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4952727429218122, guid: 6f1a7354265853f44b0ed5e2e43676ad, type: 3}
   m_PrefabInstance: {fileID: 1337037704853265700}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5731940312175951054 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: -2520346813510704662, guid: 6f1a7354265853f44b0ed5e2e43676ad, type: 3}
+  m_PrefabInstance: {fileID: 1337037704853265700}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9a334e26a2d472cbc9223bed79b4640, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Presentation.UI::_Project.Scripts.Presentation.Visuals.WeaponAnimatorView
+--- !u!114 &6950706003988702049 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8285430334195957317, guid: 6f1a7354265853f44b0ed5e2e43676ad, type: 3}
+  m_PrefabInstance: {fileID: 1337037704853265700}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e57f44898e74764870e137f6f8ace7c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Presentation.UI::_Project.Scripts.Presentation.Visuals.WeaponPartTweener
+--- !u!114 &7766315540652312000 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8739624730559535332, guid: 6f1a7354265853f44b0ed5e2e43676ad, type: 3}
+  m_PrefabInstance: {fileID: 1337037704853265700}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e57f44898e74764870e137f6f8ace7c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Presentation.UI::_Project.Scripts.Presentation.Visuals.WeaponPartTweener
 --- !u!114 &7911311291239598665 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9170598783645030253, guid: 6f1a7354265853f44b0ed5e2e43676ad, type: 3}
@@ -698,6 +752,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7836572987271988976}
     m_Modifications:
+    - target: {fileID: -7436684950983353827, guid: 8b0b86b42def11849a8eba21f4a6a684, type: 3}
+      propertyPath: SortKey
+      value: 3573495740
+      objectReference: {fileID: 0}
     - target: {fileID: 1236257789494122, guid: 8b0b86b42def11849a8eba21f4a6a684, type: 3}
       propertyPath: m_Name
       value: Bennelli_M4
@@ -746,11 +804,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: -7.89
       objectReference: {fileID: 0}
+    - target: {fileID: 2369659871960706104, guid: 8b0b86b42def11849a8eba21f4a6a684, type: 3}
+      propertyPath: SortKey
+      value: 688956623
+      objectReference: {fileID: 0}
+    - target: {fileID: 2756297562950001170, guid: 8b0b86b42def11849a8eba21f4a6a684, type: 3}
+      propertyPath: SortKey
+      value: 2724990181
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8b0b86b42def11849a8eba21f4a6a684, type: 3}
+--- !u!114 &2453252666904181509 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 626391902673570249, guid: 8b0b86b42def11849a8eba21f4a6a684, type: 3}
+  m_PrefabInstance: {fileID: 3079002339861885644}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9a334e26a2d472cbc9223bed79b4640, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Presentation.UI::_Project.Scripts.Presentation.Visuals.WeaponAnimatorView
 --- !u!114 &2819564380277222812 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: -8242771982243537072, guid: 8b0b86b42def11849a8eba21f4a6a684, type: 3}
@@ -767,6 +844,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4243371153570508, guid: 8b0b86b42def11849a8eba21f4a6a684, type: 3}
   m_PrefabInstance: {fileID: 3079002339861885644}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5533155417021003952 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7382358398924278396, guid: 8b0b86b42def11849a8eba21f4a6a684, type: 3}
+  m_PrefabInstance: {fileID: 3079002339861885644}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e57f44898e74764870e137f6f8ace7c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Presentation.UI::_Project.Scripts.Presentation.Visuals.WeaponPartTweener
 --- !u!1001 &8654157681317404821
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -798,6 +886,10 @@ PrefabInstance:
     - target: {fileID: 1698056052845220, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
       propertyPath: m_Name
       value: RGD-5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1698056052845220, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4379243761268538, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
       propertyPath: m_LocalPosition.x

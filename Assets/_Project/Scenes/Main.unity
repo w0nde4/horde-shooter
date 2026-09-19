@@ -1002,6 +1002,7 @@ MonoBehaviour:
   waveCycleConfig: {fileID: 11400000, guid: 1f302c6196d90b64c88b44574bc0712e, type: 2}
   waveSpawnerConfig: {fileID: 11400000, guid: d45d7827196befe49b37ea9f3698ea99, type: 2}
   playerConfig: {fileID: 11400000, guid: 2002afcff9ceb4c4ab5043a836b354bb, type: 2}
+  weaponAudioConfig: {fileID: 11400000, guid: 60b960b79f88a9242978fdfa7c840da5, type: 2}
   useNetwork: 1
 --- !u!1 &601081274
 GameObject:

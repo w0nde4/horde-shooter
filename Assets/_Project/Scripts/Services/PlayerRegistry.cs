@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Fusion;
 using UnityEngine;
 
 namespace _Project.Scripts.Services
@@ -77,6 +78,26 @@ namespace _Project.Scripts.Services
         {
             _players.Clear();
             _playersList.Clear();
+        }
+        
+        public GameObject GetPlayer(PlayerRef playerRef)
+        {
+            if (playerRef == PlayerRef.None) return null;
+
+            for (var i = 0; i < _playersList.Count; i++)
+            {
+                var playerObj = _playersList[i];
+                if (playerObj == null) continue;
+
+                if (!playerObj.TryGetComponent<NetworkObject>(out var netObj)) continue;
+                
+                if (netObj.InputAuthority == playerRef)
+                {
+                    return playerObj;
+                }
+            }
+
+            return null;
         }
     }
 }

@@ -28,7 +28,19 @@ namespace _Project.Scripts.Gameplay.Weapons
             set => _intent = value;
         }
         public int CurrentIndex => _currentWeaponIndex;
+
         public int TotalWeapons => weapons.Length;
+
+        public override void Spawned()
+        {
+            InitializeWeapons();
+            
+            if (Runner.IsServer && weapons.Length > 0)
+            {
+                _currentWeaponIndex = 0;
+            }
+            RefreshWeaponVisuals();
+        }
 
         private void InitializeWeapons()
         {
@@ -102,7 +114,7 @@ namespace _Project.Scripts.Gameplay.Weapons
                 _oldButtons = input.Buttons;
             }
         }
-        
+
         private void ProcessWeaponSwitchCommand(int command)
         {
             if (weapons == null || weapons.Length == 0) return;
@@ -195,6 +207,10 @@ namespace _Project.Scripts.Gameplay.Weapons
             _currentWeapon.gameObject.SetActive(true);
         }
 
+        public Animator GetCurrentWeaponAnimator() => _currentWeapon != null ? _currentWeapon.GetComponent<Animator>() : null;
+
+        public Transform GetShootOrigin() => shootOrigin;
+
         private void RefreshWeaponVisuals()
         {
             if (weapons == null || weapons.Length == 0) return;
@@ -209,17 +225,6 @@ namespace _Project.Scripts.Gameplay.Weapons
                 _currentWeapon = weapons[_currentWeaponIndex];
                 _currentWeapon?.gameObject.SetActive(true);
             }
-        }
-
-        public override void Spawned()
-        {
-            InitializeWeapons();
-            
-            if (Runner.IsServer && weapons.Length > 0)
-            {
-                _currentWeaponIndex = 0;
-            }
-            RefreshWeaponVisuals();
         }
     }
 }

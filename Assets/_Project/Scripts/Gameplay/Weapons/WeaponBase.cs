@@ -4,6 +4,7 @@ using _Project.Scripts.Core.Signals;
 using _Project.Scripts.Domain.Gameplay;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Domain.Gameplay.Data;
+using _Project.Scripts.Domain.Gameplay.Signals;
 using Fusion;
 using UnityEngine;
 using Zenject;
@@ -21,17 +22,20 @@ namespace _Project.Scripts.Gameplay.Weapons
         [Inject] private IDamageService _damageService;
         [Inject] private IShootingService _shootingService;
 
-        [Networked] private int NetworkedAmmo { get; set; } 
-        [Networked] private TickTimer ReloadTimer { get; set; }
+        [Networked] private int NetworkedAmmo { get; set; }
         [Networked] private TickTimer FireDelayTimer { get; set; }
 
         [Networked, Capacity(BulletBufferCapacity)]
         private NetworkArray<NetworkBulletData> BulletBuffer => default;
-        
+
         [Networked, OnChangedRender(nameof(OnBulletCounterChanged))]
         private int TotalBulletsFiredCounter { get; set; }
-    
+
+        [Networked, OnChangedRender(nameof(OnReloadTimerChanged))]
+        private TickTimer ReloadTimer { get; set; }
+
         private int _lastRenderProcessBullets;
+        private bool _lastRenderWasReloading;
         private Transform _shootOrigin;
         
         public bool IsReloading => !ReloadTimer.ExpiredOrNotRunning(Runner);
@@ -50,6 +54,7 @@ namespace _Project.Scripts.Gameplay.Weapons
         public override void Spawned()
         {
             _lastRenderProcessBullets = TotalBulletsFiredCounter;
+            _lastRenderWasReloading = !ReloadTimer.ExpiredOrNotRunning(Runner);
 
             if (HasStateAuthority && NetworkedAmmo == 0 && config != null)
             {
@@ -100,28 +105,6 @@ namespace _Project.Scripts.Gameplay.Weapons
                 Debug.Log($"{WeaponName}: Reload complete via network");
             }
         }
-
-        //todo: delete after network implementation
-        // protected virtual async UniTask ReloadAsync()
-        // {
-        //     _isReloading = true;
-        //     Debug.Log($"{WeaponName}: Reloading...");
-        //
-        //     try
-        //     {
-        //         await UniTask.Delay(
-        //             TimeSpan.FromSeconds(config.reloadTime),
-        //             cancellationToken: this.GetCancellationTokenOnDestroy()
-        //         );
-        //
-        //         _currentAmmo = config.magazineSize;
-        //         Debug.Log($"{WeaponName}: Reload complete.");
-        //     }
-        //     finally
-        //     {
-        //         _isReloading = false;
-        //     }
-        // }
 
         protected ShotResult PerformRaycast()
         {
@@ -180,6 +163,17 @@ namespace _Project.Scripts.Gameplay.Weapons
             }
         }
 
+        private void OnReloadTimerChanged()
+        {
+            var isCurrentlyReloading = !ReloadTimer.ExpiredOrNotRunning(Runner);
+
+            if (isCurrentlyReloading != _lastRenderWasReloading)
+            {
+                _lastRenderWasReloading = isCurrentlyReloading;
+                _signalBus.Fire(new ReloadStateChangedSignal(WeaponName, Object.InputAuthority, isCurrentlyReloading));
+            }
+        }
+
         private void TriggerLocalShot(bool isHit, Vector3 hitPoint)
         {
             var visualShot = new ShotResult
@@ -187,8 +181,18 @@ namespace _Project.Scripts.Gameplay.Weapons
                 Hit = isHit,
                 HitPoint = hitPoint
             };
-
-            _signalBus.Fire(new ShotFiredSignal(visualShot));
+            
+            var muzzlePosition = _shootOrigin != null ? _shootOrigin.position : transform.position;
+            var muzzleRotation = _shootOrigin != null ? _shootOrigin.rotation : transform.rotation;
+            
+            _signalBus.Fire(new ShotFiredSignal(
+                visualShot,
+                WeaponName,
+                Object.InputAuthority,
+                muzzlePosition,
+                muzzleRotation
+                )
+            );
         }
     }
 }

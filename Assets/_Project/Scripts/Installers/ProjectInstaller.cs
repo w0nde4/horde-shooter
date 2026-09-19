@@ -5,6 +5,7 @@ using _Project.Scripts.Domain.Gameplay.Signals;
 using _Project.Scripts.Installers.Bootstrap;
 using _Project.Scripts.Services;
 using _Project.Scripts.Services.Network;
+using _Project.Scripts.Services.Presentation;
 using Zenject;
 
 namespace _Project.Scripts.Installers
@@ -34,6 +35,9 @@ namespace _Project.Scripts.Installers
             Container.Bind<IUpgradeChoiceProvider>()
                 .To<UpgradeChoiceProviderStub>()
                 .AsSingle();
+            Container.Bind<IAudioService>()
+                .To<AudioService>()
+                .AsSingle();
 
             // === Loader ===
             Container.BindInterfacesAndSelfTo<BootstrapLoader>()
@@ -48,6 +52,7 @@ namespace _Project.Scripts.Installers
             Container.DeclareSignal<ShotFiredSignal>().OptionalSubscriber();
             Container.DeclareSignal<DamageAppliedSignal>().OptionalSubscriber();
             Container.DeclareSignal<OpenUpgradeUISignal>().OptionalSubscriber();
+            Container.DeclareSignal<ReloadStateChangedSignal>().OptionalSubscriber();
         }
     }
 }

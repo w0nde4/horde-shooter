@@ -4,6 +4,8 @@ using _Project.Scripts.Domain.Gameplay.Interfaces;
 using _Project.Scripts.Gameplay.Player;
 using _Project.Scripts.Gameplay.Upgrades;
 using _Project.Scripts.Gameplay.Waves;
+using _Project.Scripts.Presentation.Configs;
+using _Project.Scripts.Presentation.Visuals;
 using _Project.Scripts.Services;
 using _Project.Scripts.Services.Network;
 using UnityEngine;
@@ -16,6 +18,7 @@ namespace _Project.Scripts.Installers
         [SerializeField] private WaveCycleConfig waveCycleConfig;
         [SerializeField] private WaveSpawnerConfig waveSpawnerConfig;
         [SerializeField] private PlayerConfig playerConfig;
+        [SerializeField] private WeaponAudioConfig weaponAudioConfig;
         [SerializeField] private bool useNetwork;
 
         public override void InstallBindings()
@@ -29,6 +32,9 @@ namespace _Project.Scripts.Installers
                 .AsSingle();
             Container.Bind<PlayerConfig>()
                 .FromInstance(playerConfig)
+                .AsSingle();
+            Container.Bind<WeaponAudioConfig>()
+                .FromInstance(weaponAudioConfig)
                 .AsSingle();
             
             // === Network check ===
@@ -58,6 +64,8 @@ namespace _Project.Scripts.Installers
             Container.BindInterfacesAndSelfTo<NetworkPlayerSpawnHandler>()
                 .AsSingle()
                 .NonLazy();
+            Container.BindInterfacesAndSelfTo<WeaponFireAudioVisualizer>()
+                .AsSingle();
             
             // === Interfaces for waves/enemies/upgrades ===
             Container.Bind<IWaveOrchestrator>()

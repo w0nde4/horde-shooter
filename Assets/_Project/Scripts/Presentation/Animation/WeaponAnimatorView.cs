@@ -6,7 +6,7 @@ using Fusion;
 using UnityEngine;
 using Zenject;
 
-namespace _Project.Scripts.Presentation.Visuals
+namespace _Project.Scripts.Presentation.Animation
 {
     public class WeaponAnimatorView : NetworkBehaviour
     {

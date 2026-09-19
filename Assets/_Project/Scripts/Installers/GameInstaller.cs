@@ -4,8 +4,10 @@ using _Project.Scripts.Domain.Gameplay.Interfaces;
 using _Project.Scripts.Gameplay.Player;
 using _Project.Scripts.Gameplay.Upgrades;
 using _Project.Scripts.Gameplay.Waves;
+using _Project.Scripts.Presentation.Audio;
 using _Project.Scripts.Presentation.Configs;
-using _Project.Scripts.Presentation.Visuals;
+using _Project.Scripts.Presentation.UI;
+using _Project.Scripts.Presentation.VFX;
 using _Project.Scripts.Services;
 using _Project.Scripts.Services.Network;
 using UnityEngine;
@@ -19,11 +21,21 @@ namespace _Project.Scripts.Installers
         [SerializeField] private WaveSpawnerConfig waveSpawnerConfig;
         [SerializeField] private PlayerConfig playerConfig;
         [SerializeField] private WeaponAudioConfig weaponAudioConfig;
+        [SerializeField] private WeaponVFXConfig weaponVFXConfig;
         [SerializeField] private bool useNetwork;
 
         public override void InstallBindings()
         {
             // === Configs ===
+            if (waveCycleConfig == null
+                || waveSpawnerConfig == null
+                || playerConfig == null
+                || weaponAudioConfig == null
+                || weaponVFXConfig == null)
+            {
+                Debug.LogError("GameInstaller: Configs is not assigned!");
+                return;
+            }
             Container.Bind<WaveCycleConfig>()
                 .FromInstance(waveCycleConfig)
                 .AsSingle();
@@ -35,6 +47,9 @@ namespace _Project.Scripts.Installers
                 .AsSingle();
             Container.Bind<WeaponAudioConfig>()
                 .FromInstance(weaponAudioConfig)
+                .AsSingle();
+            Container.Bind<WeaponVFXConfig>()
+                .FromInstance(weaponVFXConfig)
                 .AsSingle();
             
             // === Network check ===
@@ -64,7 +79,15 @@ namespace _Project.Scripts.Installers
             Container.BindInterfacesAndSelfTo<NetworkPlayerSpawnHandler>()
                 .AsSingle()
                 .NonLazy();
+            
+            // === Presentation ===
             Container.BindInterfacesAndSelfTo<WeaponFireAudioVisualizer>()
+                .AsSingle();
+            Container.BindInterfacesAndSelfTo<WeaponReloadAudioVisualizer>()
+                .AsSingle();
+            Container.BindInterfacesAndSelfTo<WeaponTracerVFXVisualizer>()
+                .AsSingle();
+            Container.BindInterfacesAndSelfTo<WeaponImpactVFXVisualizer>()
                 .AsSingle();
             
             // === Interfaces for waves/enemies/upgrades ===
@@ -84,6 +107,10 @@ namespace _Project.Scripts.Installers
                 .FromComponentInHierarchy()
                 .AsSingle();
             Container.Bind<PlayerSpawner>()
+                .FromComponentInHierarchy()
+                .AsSingle();
+            Container.Bind<IUpgradeChoiceProvider>()
+                .To<UpgradeChoiceProvider>()
                 .FromComponentInHierarchy()
                 .AsSingle();
         }

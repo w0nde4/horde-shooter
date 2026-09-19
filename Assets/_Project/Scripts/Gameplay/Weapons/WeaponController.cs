@@ -226,5 +226,10 @@ namespace _Project.Scripts.Gameplay.Weapons
                 _currentWeapon?.gameObject.SetActive(true);
             }
         }
+
+        public Transform GetMuzzleOrigin()
+        {
+            return _currentWeapon != null ? _currentWeapon.MuzzleTransform : null;
+        }
     }
 }

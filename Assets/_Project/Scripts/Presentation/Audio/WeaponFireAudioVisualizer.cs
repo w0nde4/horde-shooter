@@ -6,7 +6,7 @@ using _Project.Scripts.Services;
 using UnityEngine;
 using Zenject;
 
-namespace _Project.Scripts.Presentation.Visuals
+namespace _Project.Scripts.Presentation.Audio
 {
     public class WeaponFireAudioVisualizer : IInitializable, IDisposable
     {

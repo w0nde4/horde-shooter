@@ -12,27 +12,47 @@ namespace _Project.Scripts.Presentation.Configs
         {
             public string weaponName;
             public AudioClip shotSound;
+            public AudioClip reloadSound;
         }
 
         [SerializeField] private List<AudioMapping> mappings;
+        
+        private Dictionary<string, AudioClip> _cachedShotSounds;
+        private Dictionary<string, AudioClip> _cachedReloadSounds;
+        
+        private void EnsureCacheInitialized()
+        {
+            if (_cachedShotSounds != null) return;
 
-        private Dictionary<string, AudioClip> _cachedMappings;
+            _cachedShotSounds = new Dictionary<string, AudioClip>();
+            _cachedReloadSounds = new Dictionary<string, AudioClip>();
 
+            foreach (var map in mappings)
+            {
+                if (string.IsNullOrEmpty(map.weaponName)) continue;
+
+                if (map.shotSound != null)
+                    _cachedShotSounds[map.weaponName] = map.shotSound;
+
+                if (map.reloadSound != null)
+                    _cachedReloadSounds[map.weaponName] = map.reloadSound;
+            }
+        }
+        
         public AudioClip GetShotSound(string weaponName)
         {
-            if (_cachedMappings == null)
-            {
-                _cachedMappings = new Dictionary<string, AudioClip>();
-                foreach (var map in mappings)
-                {
-                    if (!string.IsNullOrEmpty(map.weaponName) && map.shotSound != null)
-                    {
-                        _cachedMappings[map.weaponName] = map.shotSound;
-                    }
-                }
-            }
-
-            return _cachedMappings.GetValueOrDefault(weaponName);
+            if (string.IsNullOrEmpty(weaponName)) return null;
+            
+            EnsureCacheInitialized();
+            return _cachedShotSounds.GetValueOrDefault(weaponName);
+        }
+        
+        public AudioClip GetReloadSound(string weaponName)
+        {
+            if (string.IsNullOrEmpty(weaponName)) return null;
+            
+            EnsureCacheInitialized();
+            return _cachedReloadSounds.GetValueOrDefault(weaponName);
         }
     }
 }

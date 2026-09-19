@@ -1,5 +1,6 @@
 ﻿using System;
 using _Project.Scripts.Domain.Gameplay;
+using _Project.Scripts.Presentation.UI.Configs;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,7 +11,7 @@ namespace _Project.Scripts.Presentation.UI
     public class UpgradeButtonView : MonoBehaviour
     {
         [SerializeField] private TMP_Text txtName;
-        [SerializeField] private Image imgIcon; //for custom icon
+        [SerializeField] private Image imgIcon;
 
         private Button _button;
         private UpgradeType _upgradeType;
@@ -22,26 +23,20 @@ namespace _Project.Scripts.Presentation.UI
             _button.onClick.AddListener(OnButtonClicked);
         }
 
-        public void Setup(UpgradeType type, Action<UpgradeType> onClick)
+        public void Setup(UpgradeVisualConfig.UpgradeVisualData visualData, Action<UpgradeType> onClick)
         {
-            _upgradeType = type;
+            _upgradeType = visualData.upgradeType;
             _onClickCallback = onClick;
 
             if (txtName != null)
             {
-                txtName.text = type.ToString();
+                txtName.text = visualData.displayName;
             }
 
             if (imgIcon != null)
             {
-                imgIcon.color = type switch
-                {
-                    UpgradeType.Damage => Color.red,
-                    UpgradeType.GrenadeCooldown => Color.yellow,
-                    UpgradeType.MaxHealth => Color.green,
-                    UpgradeType.MoveSpeed => Color.blue,
-                    _ => imgIcon.color
-                };
+                imgIcon.sprite = visualData.icon;
+                imgIcon.color = visualData.iconColor;
             }
         }
 

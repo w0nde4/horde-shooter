@@ -54,6 +54,8 @@ namespace _Project.Scripts.Installers
             Container.DeclareSignal<DamageAppliedSignal>().OptionalSubscriber();
             Container.DeclareSignal<OpenUpgradeUISignal>().OptionalSubscriber();
             Container.DeclareSignal<ReloadStateChangedSignal>().OptionalSubscriber();
+            Container.DeclareSignal<UpgradeSelectionStartedSignal>().OptionalSubscriber();
+            Container.DeclareSignal<UpgradeSelectionEndedSignal>().OptionalSubscriber();
         }
     }
 }

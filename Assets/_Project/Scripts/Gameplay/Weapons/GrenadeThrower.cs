@@ -20,9 +20,9 @@ namespace _Project.Scripts.Gameplay.Weapons
         [Inject] private PlayerStats _playerStats;
         [Inject] private ISpawnService _spawnService;
         
-        [Networked] private NetworkButtons _oldButtons { get; set; }
         [Networked] private float _lastThrowTime { get; set; } = -1000f;
-        
+
+        private NetworkButtons _oldButtons;
         private PlayerIntent _intent;
         private float _lastThrowTimeOffline = -Mathf.Infinity;
         
@@ -51,7 +51,8 @@ namespace _Project.Scripts.Gameplay.Weapons
                     {
                         ThrowGrenadeNetwork();
                     }
-                    else
+                    
+                    else if (HasInputAuthority)
                     {
                         Rpc_RequestGrenadeThrow();
                     }

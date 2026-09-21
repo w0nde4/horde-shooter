@@ -43,21 +43,23 @@ namespace _Project.Scripts.Services.Presentation
         public void Play2D(AudioClip clip, float volume = 1)
         {
             if (clip == null) return;
-            PlayInternal(clip, Vector3.zero, volume, 0f); //0 = 2D
+            PlayInternal(clip, Vector3.zero, volume, 0f); // spatialBlend = 0 => 2D
         }
 
         public void Play3D(AudioClip clip, Transform parent, Vector3 position, float volume = 1f, float spatialBlend = 1f)
         {
             if (clip == null) return;
-            PlayInternal(clip, position, volume, spatialBlend, parent); //1 = full 3D
+            PlayInternal(
+                clip: clip,
+                position: position,
+                volume: volume,
+                spatialBlend: spatialBlend,
+                parent: parent);
         }
 
         private void PlayInternal(AudioClip clip, Vector3 position, float volume, float spatialBlend, Transform parent = null)
         {
             var source = _sourcePool.Get();
-            
-            if (parent == null)
-                source.transform.position = position;
             
             source.clip = clip;
             source.volume = volume;
@@ -66,8 +68,9 @@ namespace _Project.Scripts.Services.Presentation
             if (parent != null)
             {
                 source.transform.SetParent(parent);
-                source.transform.localPosition = Vector3.zero;
             }
+
+            source.transform.position = position;
 
             source.Play();
 

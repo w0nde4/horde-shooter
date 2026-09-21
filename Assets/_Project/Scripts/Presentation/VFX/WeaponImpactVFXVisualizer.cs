@@ -45,7 +45,7 @@ namespace _Project.Scripts.Presentation.VFX
             if (!_vfxConfig.TryGetMapping(signal.WeaponName, out var vfx)) return;
 
             var hitLayer = _environmentLayer;
-            Debug.Log($"Hit collider layer: {signal.Shot.HitCollider.gameObject.layer}");
+            
             if(signal.Shot.HitCollider != null) 
                 hitLayer = signal.Shot.HitCollider.gameObject.layer;
             

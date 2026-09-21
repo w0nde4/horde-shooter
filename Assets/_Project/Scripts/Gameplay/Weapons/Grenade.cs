@@ -15,15 +15,15 @@ namespace _Project.Scripts.Gameplay.Weapons
         private GrenadeConfig _config;
         private bool _exploded;
         
-        [Networked] private TickTimer _explosionTimer { get; set; }
+        [Networked] private TickTimer _explosionTimer { get; set; } 
 
         public void Initialize(GrenadeConfig config)
-        {
+        { 
             _config = config;
             
             if (Runner != null && Runner.IsRunning)
             {
-                if (HasInputAuthority && !_explosionTimer.IsRunning)
+                if (HasStateAuthority && !_explosionTimer.IsRunning)
                 {
                     _explosionTimer = TickTimer.CreateFromSeconds(Runner, _config.explosionDelay);
                 }
@@ -32,6 +32,14 @@ namespace _Project.Scripts.Gameplay.Weapons
             {
                 ExplosionTimerAsync().Forget();
             }
+        }
+
+        public override void Spawned()
+        {
+            Debug.Log($"[GRENADE SPAWNED] IsServer={Runner.IsServer} " +
+                      $"HasStateAuthority={HasStateAuthority} " +
+                      $"HasInputAuthority={Object.HasInputAuthority} " +
+                      $"Id={Object.Id} PrefabId={Object.NetworkTypeId}");
         }
 
         private async UniTask ExplosionTimerAsync()

@@ -15,7 +15,6 @@ namespace _Project.Scripts.Services
         private readonly WaveCycleConfig _config;
         private readonly IWaveSpawner _waveSpawner;
         private readonly PlayerRegistry _playerRegistry;
-        private readonly SignalBus _signalBus;
         
         private int _currentWaveIndex;
         private bool _isWaveActive;
@@ -24,12 +23,11 @@ namespace _Project.Scripts.Services
         public event Action OnWaveComplete;
 
         [Inject]
-        public WaveOrchestrator(WaveCycleConfig config, IWaveSpawner waveSpawner, PlayerRegistry playerRegistry, SignalBus signalBus)
+        public WaveOrchestrator(WaveCycleConfig config, IWaveSpawner waveSpawner, PlayerRegistry playerRegistry)
         {
             _config = config;
             _waveSpawner = waveSpawner;
             _playerRegistry = playerRegistry;
-            _signalBus = signalBus;
         }
         
         public async UniTask StartWaveCycle(CancellationToken ct)
@@ -66,7 +64,6 @@ namespace _Project.Scripts.Services
                 }
                 
                 Debug.Log($"[Server] Opening upgrades for {activeManagers.Count} players.");
-                _signalBus.Fire<UpgradeSelectionStartedSignal>();
                 foreach (var manager in activeManagers)
                 {
                     manager.ShowUpgrades();
@@ -76,8 +73,6 @@ namespace _Project.Scripts.Services
                     UniTask.WaitUntil(() => manager.IsUpgradeSelected, cancellationToken: ct)
                 );
                 await UniTask.WhenAll(waitTasks);
-
-                _signalBus.Fire<UpgradeSelectionEndedSignal>();
                 
                 foreach (var manager in activeManagers)
                 {

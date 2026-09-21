@@ -16,6 +16,7 @@ namespace _Project.Scripts.Gameplay.Weapons
         private const int BulletBufferCapacity = 32;
         
         [SerializeField] protected WeaponConfig config;
+        
         [Header("Marker for VFX")]
         [SerializeField] private Transform muzzleMarker;
         
@@ -27,7 +28,7 @@ namespace _Project.Scripts.Gameplay.Weapons
         [Networked] private int NetworkedAmmo { get; set; }
         [Networked] private TickTimer FireDelayTimer { get; set; }
         [Networked] private TickTimer ReloadTimer { get; set; }
-
+        
         [Networked, Capacity(BulletBufferCapacity)]
         private NetworkArray<NetworkBulletData> BulletBuffer => default;
 
@@ -121,7 +122,7 @@ namespace _Project.Scripts.Gameplay.Weapons
                 config.hitLayers
                 );
             
-            if(HasStateAuthority && shot.Hit && shot.HitCollider != null)
+            if(shot.Hit && shot.HitCollider != null)
             {
                 var damageable = shot.HitCollider.GetComponent<IDamageable>();
                 if (damageable != null)
@@ -152,6 +153,8 @@ namespace _Project.Scripts.Gameplay.Weapons
 
         private void OnBulletCounterChanged()
         {
+            if(HasInputAuthority) return;
+            
             if (TotalBulletsFiredCounter > _lastRenderProcessBullets)
             {
                 var bulletsToProcess = TotalBulletsFiredCounter - _lastRenderProcessBullets;

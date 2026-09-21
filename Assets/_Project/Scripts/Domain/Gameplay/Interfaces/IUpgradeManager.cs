@@ -1,11 +1,12 @@
 ﻿using System;
+using Fusion;
 
 namespace _Project.Scripts.Domain.Gameplay.Interfaces
 {
     public interface IUpgradeManager
     {
         void ShowUpgrades();
-        bool IsUpgradeSelected { get; }
+        NetworkBool IsUpgradeSelected { get; }
         void ResetSelection();
         event Action<UpgradeType> UpgradeSelected;
     }

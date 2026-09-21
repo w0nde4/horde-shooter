@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using _Project.Scripts.Core.Signals;
 using _Project.Scripts.Domain.Gameplay;
 using _Project.Scripts.Domain.Gameplay.Interfaces;
-using _Project.Scripts.Domain.Gameplay.Signals;
 using Fusion;
 using UnityEngine;
 using Zenject;
+using Random = System.Random;
 
 namespace _Project.Scripts.Gameplay.Upgrades
 {
@@ -19,11 +20,19 @@ namespace _Project.Scripts.Gameplay.Upgrades
         [Inject] private IUpgradeChoiceProvider _choiceProvider;
         [Inject] private SignalBus _signalBus;
     
-        private List<UpgradeType> _currentChoices = new();
         private PlayerStats _playerStats;
-    
         public event Action<UpgradeType> UpgradeSelected;
-        public bool IsUpgradeSelected { get; private set; }
+        
+        [Networked, Capacity(4)]
+        private NetworkArray<UpgradeType> _networkChoices => default;
+
+        [Networked, Capacity(16), OnChangedRender(nameof(OnStatsNetworkChanged))] 
+        public NetworkArray<float> NetworkedStats => default;
+        
+        [Networked, OnChangedRender(nameof(OnUpgradeStateChanged))]
+        public NetworkBool IsUpgradeSelected { get; private set; }
+        
+        public PlayerStats PlayerStatsInstance => _playerStats;
 
         [Inject]
         private void Construct(PlayerStats playerStats)
@@ -31,27 +40,121 @@ namespace _Project.Scripts.Gameplay.Upgrades
             _playerStats = playerStats;
         }
 
+        public override void Spawned()
+        {
+            base.Spawned();
+
+            if (HasStateAuthority)
+            {
+                IsUpgradeSelected = true;
+            }
+            
+            if (_playerStats != null)
+            {
+                _playerStats.StatResolver = GetStatValue;
+                _playerStats.OnUpgradeRequested += HandleUpgradeRequest;
+                if (HasStateAuthority)
+                {
+                    _playerStats.InitializeBaseStats(SetStatValue);
+                }
+            }
+        }
+        
+        private void HandleUpgradeRequest(UpgradeType type, float newValue)
+        {
+            if (HasStateAuthority)
+            {
+                SetStatValue(type, newValue);
+            }
+        }
+        
+        public override void Despawned(NetworkRunner runner, bool hasStateAuthority)
+        {
+            if (_playerStats != null)
+            {
+                _playerStats.StatResolver = null;
+                _playerStats.OnUpgradeRequested -= HandleUpgradeRequest;
+            }
+        }
+
+        public float GetStatValue(UpgradeType type, float fallback)
+        {
+            var index = (int)type;
+            var networkValue = NetworkedStats[index];
+            return networkValue != 0f ? networkValue : fallback;
+        }
+
+        public void SetStatValue(UpgradeType type, float newValue)
+        {
+            if(!HasStateAuthority) return;
+            NetworkedStats.Set((int)type, newValue);
+        }
+
         public void ShowUpgrades()
         {
-            if(!HasInputAuthority) return;
-            
             IsUpgradeSelected = false;
-            _currentChoices.Clear();
 
-            var allTypes = (UpgradeType[])Enum.GetValues(typeof(UpgradeType));
-            var shuffled = allTypes.OrderBy(x => Guid.NewGuid()).ToList();
+            for (var i = 0; i < _networkChoices.Length; i++)
+            {
+                _networkChoices.Set(i, default);
+            }
+
+            var playerSeed = Environment.TickCount + Object.InputAuthority.PlayerId;
+            var rand = new Random(playerSeed);
+
+            var allTypes = ((UpgradeType[])Enum.GetValues(typeof(UpgradeType)))
+                .Where(t => t != default)
+                .OrderBy(t => rand.Next())
+                .ToList();
+
             var count = UnityEngine.Random.Range(minChoices, maxChoices + 1);
-            _currentChoices = shuffled.Take(count).ToList();
 
-            _choiceProvider.ShowUpgrades(_currentChoices, SelectUpgrade);
+            for (var i = 0; i < Mathf.Min(count, allTypes.Count); i++)
+            {
+                _networkChoices.Set(i, allTypes[i]);
+            }
+        }
+
+        private void OnUpgradeStateChanged()
+        {
+            if (!HasInputAuthority) return;
+
+            if (!IsUpgradeSelected)
+            {
+                var choiceList = new List<UpgradeType>();
+                
+                foreach (var choice in _networkChoices)
+                {
+                    if (choice != default)
+                    {
+                        choiceList.Add(choice);
+                    }
+                }
+                
+                if(choiceList.Count == 0) return;
+                
+                _signalBus.Fire<UpgradeSelectionStartedSignal>();
+                _choiceProvider.ShowUpgrades(choiceList, SelectUpgrade);
+            }
+            
+            else
+            {
+                _signalBus.Fire<UpgradeSelectionEndedSignal>();
+            }
+        }
+        
+        private void OnStatsNetworkChanged()
+        {
+            if (HasInputAuthority && _playerStats != null)
+            {
+                Debug.Log("[Client] My networked stats updated!");
+                _playerStats.RefreshLocalUI();
+            }
         }
 
         public void SelectUpgrade(UpgradeType type)
         {
             if (IsUpgradeSelected) return;
-            
-            IsUpgradeSelected = true;
-
             Rpc_RequestUpgrade(type);
         }
 
@@ -59,6 +162,9 @@ namespace _Project.Scripts.Gameplay.Upgrades
         private void Rpc_RequestUpgrade(UpgradeType type)
         {
             if (_playerStats == null) return;
+            if (IsUpgradeSelected) return;
+
+            IsUpgradeSelected = true;
             
             _playerStats.ApplyUpgrade(type);
             UpgradeSelected?.Invoke(type);
@@ -68,8 +174,12 @@ namespace _Project.Scripts.Gameplay.Upgrades
 
         public void ResetSelection()
         {
-            IsUpgradeSelected = false;
-            _currentChoices.Clear();
+            IsUpgradeSelected = true;
+
+            for (var i = 0; i < _networkChoices.Length; i++)
+            {
+                _networkChoices.Set(i, default);
+            }
         }
     }
 }

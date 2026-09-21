@@ -5,7 +5,6 @@ using _Project.Scripts.Domain.Gameplay.Interfaces;
 using _Project.Scripts.Presentation.UI.Configs;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace _Project.Scripts.Presentation.UI
 {

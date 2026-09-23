@@ -37,17 +37,14 @@ namespace _Project.Scripts.Services.Network
             UnityEngine.Object.DontDestroyOnLoad(go);
         }
         
-        public async UniTask StartGameAsync(GameMode gameMode, string sessionName, bool setScene = true)
+        public async UniTask StartGameInternal(GameMode gameMode, string sessionName, string gameplaySceneName, int playersCount)
         {
-            if (_runner == null)
+            if (_runner == null || _isRunning) return;
+           
+            var sceneIndex = SceneUtility.GetBuildIndexByScenePath($"Assets/_Project/Scenes/{gameplaySceneName}.unity");
+            if (sceneIndex < 0)
             {
-                Debug.LogError("NetworkRunner is null.");
-                return;
-            }
-        
-            if (_isRunning)
-            {
-                Debug.LogWarning("Game is already running.");
+                Debug.LogError($"Scene: {gameplaySceneName} is not in Build Settings!");
                 return;
             }
             
@@ -56,40 +53,50 @@ namespace _Project.Scripts.Services.Network
                 GameMode = gameMode,
                 SessionName = sessionName,
                 SceneManager = _sceneManager,
-                PlayerCount = 2,
-                ObjectProvider = _provider
+                PlayerCount = playersCount,
+                ObjectProvider = _provider,
+                Scene = SceneRef.FromIndex(sceneIndex)
             };
             
-            if (setScene) args.Scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex);
-            
-            Debug.Log($"Starting game as: {gameMode} in session {sessionName}");
+            var result = await _runner.StartGame(args); 
+            if (result.Ok) _isRunning = true;
+            else Debug.LogError($"Failed: {result.ShutdownReason}");
+        }
 
-            try
-            {
-                var result = await _runner.StartGame(args);
-                if (result.Ok)
-                {
-                    _isRunning = true;
-                    Debug.Log("NetworkRunner started successfully.");
-                }
-                else
-                {
-                    Debug.LogError($"Failed to start game: {result.ShutdownReason}");
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Exception while starting game: {e.Message}");
-            }
+        public async UniTask StartSingleplayerGameAsync(string gameplaySceneName = "Main")
+        {
+            await StartGameInternal(GameMode.Single, "SingleplayerSession", gameplaySceneName, 1);
+        }
+
+        public async UniTask StartMultiplayerHostAsync(string sessionName, int maxPlayers = 4, string gameplaySceneName = "Main")
+        {
+            await StartGameInternal(GameMode.Host, sessionName, gameplaySceneName, maxPlayers);
+        }
+
+        public async UniTask JoinMultiplayerAsync(string sessionName, string gameplaySceneName = "Main")
+        {
+            await StartGameInternal(GameMode.Client, sessionName, gameplaySceneName, 2);
         }
 
         public void Shutdown()
         {
             if (_runner != null && _runner.IsRunning)
-            {
                 _runner.Shutdown();
-                _isRunning = false;
-            }
+            
+            _isRunning = false;
+        }
+        
+        private void RecreateRunner()
+        {
+            if (_runner != null)
+                UnityEngine.Object.Destroy(_runner.gameObject);
+
+            var go = new GameObject("NetworkRunner");
+            _runner = go.AddComponent<NetworkRunner>();
+            _runner.AddCallbacks(this);
+            _sceneManager = go.AddComponent<NetworkSceneManagerDefault>();
+            _provider = _container.InstantiateComponent<ZenjectNetworkObjectProvider>(go);
+            UnityEngine.Object.DontDestroyOnLoad(go);
         }
 
         public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }

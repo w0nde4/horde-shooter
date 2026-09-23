@@ -77,7 +77,7 @@ namespace _Project.Scripts.Services.Network
 
         public void DespawnPlayer(string ownerID, bool destroyObject = true)
         {
-            if(_registry.TryGetPlayer(ownerID, out var player)) return;
+            if(!_registry.TryGetPlayer(ownerID, out var player)) return;
             _registry.UnregisterPlayer(ownerID);
             if (!destroyObject || player == null) return;
 

@@ -39,11 +39,6 @@ namespace _Project.Scripts.Installers
             Container.Bind<IVFXService>()
                 .To<VFXService>()
                 .AsSingle();
-
-            // === Loader ===
-            Container.BindInterfacesAndSelfTo<BootstrapLoader>()
-                .AsSingle()
-                .NonLazy();
         
             // === Signals ===
             SignalBusInstaller.Install(Container);

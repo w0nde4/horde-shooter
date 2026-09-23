@@ -22,8 +22,10 @@ namespace _Project.Scripts.Gameplay.Waves
 
         private void Start()
         {
-            if (_config != null) return;
-            Debug.LogError("WaveSpawner: WaveSpawnerConfig is not assigned!");
+            if (_config == null)
+            {
+                Debug.LogError("WaveSpawner: WaveSpawnerConfig is not assigned!");
+            }
         }
 
         public void StartWave(WaveConfig wave)

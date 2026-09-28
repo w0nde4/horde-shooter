@@ -14,32 +14,29 @@ namespace _Project.Scripts.Gameplay.Weapons
         [SerializeField] private WeaponBase[] weapons;
 
         [Networked, OnChangedRender(nameof(RefreshWeaponVisuals))]
-        private int _currentWeaponIndex { get; set; } = -1;
+        private int CurrentWeaponIndex { get; set; } = -1;
         
-        [Networked] private NetworkButtons _oldButtons { get; set; }
+        [Networked] private NetworkButtons OldButtons { get; set; }
         
         private WeaponBase _currentWeapon;
-        private PlayerIntent _intent;
-        private bool _firePressedThisFrame;
         
-        public PlayerIntent Intent
-        {
-            get => _intent;
-            set => _intent = value;
-        }
-        public int CurrentIndex => _currentWeaponIndex;
-
+        public int CurrentIndex => CurrentWeaponIndex;
         public int TotalWeapons => weapons.Length;
 
         public override void Spawned()
         {
             InitializeWeapons();
             
-            if (Runner.IsServer && weapons.Length > 0)
+            if (Object.HasStateAuthority && weapons.Length > 0)
             {
-                _currentWeaponIndex = 0;
+                CurrentWeaponIndex = 0;
+                _currentWeapon = weapons[0];
+                _currentWeapon.gameObject.SetActive(true);
             }
-            RefreshWeaponVisuals();
+            else
+            {
+                RefreshWeaponVisuals();
+            }
         }
 
         private void InitializeWeapons()
@@ -61,23 +58,11 @@ namespace _Project.Scripts.Gameplay.Weapons
             }
         }
 
-        private void Start()
-        {
-            if (Runner == null || !Runner.IsRunning)
-            {
-                InitializeWeapons();
-                if (weapons is { Length: > 0 })
-                {
-                    SwitchWeaponLocal(0);
-                }
-            }
-        }
-
         public override void FixedUpdateNetwork()
         {
             if (GetInput(out NetworkInputData input))
             {
-                var pressed = input.Buttons.GetPressed(_oldButtons);
+                var pressed = input.Buttons.GetPressed(OldButtons);
                 
                 // === Network Weapon Switching ===
                 if (input.WeaponSwitchIndex >= 0)
@@ -87,7 +72,7 @@ namespace _Project.Scripts.Gameplay.Weapons
 
                 if (_currentWeapon == null)
                 {
-                    _oldButtons = input.Buttons;
+                    OldButtons = input.Buttons;
                     return;
                 }
 
@@ -111,7 +96,7 @@ namespace _Project.Scripts.Gameplay.Weapons
                     }
                 }
                 
-                _oldButtons = input.Buttons;
+                OldButtons = input.Buttons;
             }
         }
 
@@ -120,17 +105,17 @@ namespace _Project.Scripts.Gameplay.Weapons
             if (weapons == null || weapons.Length == 0) return;
             
             var total = weapons.Length;
-            var nextIndex = _currentWeaponIndex;
+            var nextIndex = CurrentWeaponIndex;
 
             switch (command)
             {
                 // "NextWeapon"
                 case 100:
-                    nextIndex = (_currentWeaponIndex + 1) % total;
+                    nextIndex = (CurrentWeaponIndex + 1) % total;
                     break;
                 // "PreviousWeapon"
                 case 101:
-                    nextIndex = (_currentWeaponIndex - 1 + total) % total;
+                    nextIndex = (CurrentWeaponIndex - 1 + total) % total;
                     break;
                 default:
                 {
@@ -143,93 +128,40 @@ namespace _Project.Scripts.Gameplay.Weapons
                 }
             }
 
-            if (nextIndex >= 0 && nextIndex < total)
+            if (nextIndex >= 0 && nextIndex < total && nextIndex != CurrentWeaponIndex)
             {
-                _currentWeaponIndex = nextIndex;
-            }
-        }
-
-        private void Update()
-        {
-            if (Runner == null || !Runner.IsRunning)
-            {
-                ApplyOfflineWeapons();
-            }
-        }
-
-        private void ApplyOfflineWeapons()
-        {
-            if (weapons == null || weapons.Length == 0) return;
-            
-            // === Weapon Switching ===
-            if (_intent.WeaponSwitchIndex >= 0)
-            {
-                ProcessWeaponSwitchCommand(_intent.WeaponSwitchIndex);
-                SwitchWeaponLocal(_currentWeaponIndex);
-                _intent.WeaponSwitchIndex = -1;
-            }
-            
-            // === Reloading ===
-            if(_intent.Reload && _currentWeapon != null)
-            {
-                _currentWeapon.Reload();
-                _intent.Reload = false;
-            }
-
-            // === Firing ===
-            if (_currentWeapon != null && _currentWeapon.CanFire())
-            {
-                var shouldFire = _currentWeapon.IsAutomatic ? _intent.Fire : _firePressedThisFrame;
-                if (shouldFire)
+                CurrentWeaponIndex = nextIndex;
+                
+                if (Object.HasStateAuthority)
                 {
-                    _currentWeapon.TryFire();
-                    if(!_currentWeapon.IsAutomatic)
-                        _firePressedThisFrame = false;
+                    UpdateLocalWeaponInstance(nextIndex);
                 }
             }
-            
-            if(!_currentWeapon.IsAutomatic && !_firePressedThisFrame)
-                _firePressedThisFrame = false;
         }
-
-        public void SwitchWeaponLocal(int newIndex)
+        
+        private void UpdateLocalWeaponInstance(int index)
         {
-            if (weapons == null || weapons.Length == 0) return;
-            if (newIndex < 0 || newIndex >= weapons.Length) return;
-
             foreach (var weapon in weapons)
             {
                 if (weapon != null) weapon.gameObject.SetActive(false);
             }
-            
-            _currentWeaponIndex = newIndex;
-            _currentWeapon = weapons[_currentWeaponIndex];
-            _currentWeapon.gameObject.SetActive(true);
+
+            _currentWeapon = weapons[index];
+            if (_currentWeapon != null)
+            {
+                _currentWeapon.gameObject.SetActive(true);
+            }
         }
-
-        public Animator GetCurrentWeaponAnimator() => _currentWeapon != null ? _currentWeapon.GetComponent<Animator>() : null;
-
-        public Transform GetShootOrigin() => shootOrigin;
 
         private void RefreshWeaponVisuals()
         {
             if (weapons == null || weapons.Length == 0) return;
             
-            foreach (var weapon in weapons)
-            {
-                if (weapon != null) weapon.gameObject.SetActive(false);
-            }
-
-            if (_currentWeaponIndex >= 0 && _currentWeaponIndex < weapons.Length)
-            {
-                _currentWeapon = weapons[_currentWeaponIndex];
-                _currentWeapon?.gameObject.SetActive(true);
-            }
+            UpdateLocalWeaponInstance(CurrentWeaponIndex);
         }
 
-        public Transform GetMuzzleOrigin()
-        {
-            return _currentWeapon != null ? _currentWeapon.MuzzleTransform : null;
-        }
+        public Animator GetCurrentWeaponAnimator() => _currentWeapon != null ? _currentWeapon.GetComponent<Animator>() : null;
+        public Transform GetShootOrigin() => shootOrigin;
+        public Transform GetMuzzleOrigin() => _currentWeapon != null ? _currentWeapon.MuzzleTransform : null;
     }
 }

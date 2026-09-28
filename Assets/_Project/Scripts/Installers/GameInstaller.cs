@@ -93,9 +93,6 @@ namespace _Project.Scripts.Installers
             Container.Bind<WaveCycle>()
                 .FromComponentInHierarchy()
                 .AsSingle();
-            Container.Bind<PlayerSpawner>()
-                .FromComponentInHierarchy()
-                .AsSingle();
             Container.Bind<IUpgradeChoiceProvider>()
                 .To<UpgradeChoiceProvider>()
                 .FromComponentInHierarchy()

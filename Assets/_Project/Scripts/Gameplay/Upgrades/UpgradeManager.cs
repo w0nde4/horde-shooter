@@ -4,7 +4,6 @@ using System.Linq;
 using _Project.Scripts.Core.Signals;
 using _Project.Scripts.Domain.Gameplay;
 using _Project.Scripts.Domain.Gameplay.Interfaces;
-using Cysharp.Threading.Tasks;
 using Fusion;
 using UnityEngine;
 using Zenject;
@@ -196,6 +195,8 @@ namespace _Project.Scripts.Gameplay.Upgrades
 
         public void ResetSelection()
         {
+            if(!HasStateAuthority) return;
+            
             IsUpgradeSelected = true;
 
             for (var i = 0; i < _networkChoices.Length; i++)

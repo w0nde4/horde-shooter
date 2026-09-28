@@ -157,7 +157,9 @@ namespace _Project.Scripts.Gameplay.Weapons
             
             if (TotalBulletsFiredCounter > _lastRenderProcessBullets)
             {
-                var bulletsToProcess = TotalBulletsFiredCounter - _lastRenderProcessBullets;
+                var currentCounter = TotalBulletsFiredCounter;
+                var bulletsToProcess = Mathf.Min(currentCounter - _lastRenderProcessBullets, BulletBufferCapacity);
+                _lastRenderProcessBullets = currentCounter - bulletsToProcess; 
 
                 for (var i = 0; i < bulletsToProcess; i++)
                 {

@@ -38,7 +38,7 @@ namespace _Project.Scripts.Presentation.Animation
         private string _weaponName;
         private Vector3 _originalLocalPosition;
         private Quaternion _originalLocalRotation;
-        private Tween _reloadTween;
+        private Sequence _reloadSequence;
 
         private void Awake()
         {
@@ -59,8 +59,8 @@ namespace _Project.Scripts.Presentation.Animation
             _signalBus.TryUnsubscribe<ShotFiredSignal>(OnShotFired);
             _signalBus.TryUnsubscribe<ReloadStateChangedSignal>(OnReloadStateChanged);
 
+            _reloadSequence?.Kill();
             transform.DOKill();
-            _reloadTween?.Kill();
         }
 
         private void OnShotFired(ShotFiredSignal signal)
@@ -80,13 +80,14 @@ namespace _Project.Scripts.Presentation.Animation
                 signal.InputAuthority != Object.InputAuthority ||
                 !gameObject.activeInHierarchy) return;
             
-            _reloadTween?.Kill();
+            _reloadSequence?.Kill();
 
             if (reloadStyle == ReloadAnimationType.Magazine)
             {
+                _reloadSequence = DOTween.Sequence().SetId(transform);
                 if (signal.IsReloading)
                 {
-                    _reloadTween = DOTween.Sequence()
+                    _reloadSequence = DOTween.Sequence()
                         .Join(transform.DOLocalMove(_originalLocalPosition + reloadPositionOffset, reloadTransitionTime)
                             .SetEase(Ease.OutCubic))
                         .Join(transform.DOLocalRotate(_originalLocalRotation.eulerAngles + reloadRotationOffset, reloadTransitionTime)
@@ -94,7 +95,7 @@ namespace _Project.Scripts.Presentation.Animation
                 }
                 else
                 {
-                    _reloadTween = DOTween.Sequence()
+                    _reloadSequence = DOTween.Sequence()
                         .Join(transform.DOLocalMove(_originalLocalPosition, reloadTransitionTime)
                             .SetEase(Ease.InOutCubic))
                         .Join(transform.DOLocalRotate(_originalLocalRotation.eulerAngles, reloadTransitionTime)

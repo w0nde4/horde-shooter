@@ -2,6 +2,7 @@
 using _Project.Scripts.Gameplay.Weapons;
 using DG.Tweening;
 using Fusion;
+using TMPro;
 using UnityEngine;
 using Zenject;
 
@@ -34,6 +35,7 @@ namespace _Project.Scripts.Presentation.Animation
         private string _weaponName;
         private Vector3 _initialLocalPosition;
         private Vector3 _initialLocalRotation;
+        private Sequence _delaySequence;
 
         private void Awake()
         {
@@ -52,7 +54,7 @@ namespace _Project.Scripts.Presentation.Animation
         public override void Despawned(NetworkRunner runner, bool hasState)
         {
             _signalBus.TryUnsubscribe<ShotFiredSignal>(OnShotFired);
-            
+            _delaySequence?.Kill();
             transform.DOKill();
         }
 
@@ -62,6 +64,7 @@ namespace _Project.Scripts.Presentation.Animation
                 signal.InputAuthority != Object.InputAuthority ||
                 !gameObject.activeInHierarchy) return;
 
+            _delaySequence?.Kill();
             transform.DOKill(complete: true);
             transform.localPosition = _initialLocalPosition;
 
@@ -86,16 +89,18 @@ namespace _Project.Scripts.Presentation.Animation
             var backTime = duration * 0.4f;
             var forwardTime = duration * 0.6f;
 
+            _delaySequence = DOTween.Sequence().SetId(transform);
+
             if (animMode == AnimationMode.PunchPosition)
             {
-                DOTween.Sequence()
+                _delaySequence
                     .AppendInterval(shotDelay)
                     .Append(transform.DOLocalMove(_initialLocalPosition + punchVector, backTime).SetEase(Ease.OutCubic))
                     .Append(transform.DOLocalMove(_initialLocalPosition, forwardTime).SetEase(Ease.InOutCubic));
             }
             else
             {
-                DOTween.Sequence()
+                _delaySequence
                     .AppendInterval(shotDelay)
                     .Append(transform.DOLocalRotate(_initialLocalRotation + punchVector, backTime)
                         .SetEase(Ease.OutCubic))

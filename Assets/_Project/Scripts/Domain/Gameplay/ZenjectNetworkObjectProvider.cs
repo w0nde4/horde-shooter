@@ -9,14 +9,8 @@ namespace _Project.Scripts.Domain.Gameplay
 {
     public class ZenjectNetworkObjectProvider : NetworkObjectProviderDefault, INetworkRunnerCallbacks
     {
-        private DiContainer _container;
         private readonly List<GameObject> _pendingObjects = new();
-
-        [Inject]
-        public void Construct(DiContainer container)
-        {
-            _container = container;
-        }
+        private SceneContext _cachedSceneContext;
 
         protected override NetworkObject InstantiatePrefab(NetworkRunner runner, NetworkObject prefab)
         {
@@ -28,12 +22,14 @@ namespace _Project.Scripts.Domain.Gameplay
             
             var no = go.GetComponent<NetworkObject>();
             
-            var sceneContext = FindFirstObjectByType<SceneContext>();
-
-            if (sceneContext != null && sceneContext.Container != null)
+            if (_cachedSceneContext == null)
             {
-                sceneContext.Container.InjectGameObject(go);
-                
+                _cachedSceneContext = FindFirstObjectByType<SceneContext>();
+            }
+
+            if (_cachedSceneContext != null && _cachedSceneContext.Container != null)
+            {
+                _cachedSceneContext.Container.InjectGameObject(go);
                 go.SetActive(true);
                 Debug.Log($"[NETWORK] {go.name} injected successfully before Awake through SceneContext.");
             }
@@ -54,13 +50,13 @@ namespace _Project.Scripts.Domain.Gameplay
         public void OnSceneLoadDone(NetworkRunner runner)
         {
             Debug.Log("[NETWORK] Fusion event: Scene loaded successfully. Start injecting.");
+            _cachedSceneContext = FindFirstObjectByType<SceneContext>();
             InjectAllPendingObjects();
         }
 
         private void InjectAllPendingObjects()
         {
-            var sceneContext = FindFirstObjectByType<SceneContext>();
-            if (sceneContext == null || sceneContext.Container == null)
+            if (_cachedSceneContext == null || _cachedSceneContext.Container == null)
             {
                 Debug.LogError("[NETWORK] Fatal error: Scene loaded, but SceneContext is null! Pended objects is not injected.");
                 return;
@@ -72,7 +68,7 @@ namespace _Project.Scripts.Domain.Gameplay
                 {
                     if (go != null)
                     {
-                        sceneContext.Container.InjectGameObject(go);
+                        _cachedSceneContext.Container.InjectGameObject(go);
                         go.SetActive(true);
                         Debug.Log($"[EVENT INJECT] Pended object {go.name} injected successfully through OnSceneLoadDone.");
                     }
@@ -83,7 +79,9 @@ namespace _Project.Scripts.Domain.Gameplay
         }
 
         public void OnSceneLoadStart(NetworkRunner runner)
-        { }
+        {
+            _cachedSceneContext = null; 
+        }
 
         public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
         {

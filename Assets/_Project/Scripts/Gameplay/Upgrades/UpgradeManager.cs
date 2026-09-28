@@ -4,6 +4,7 @@ using System.Linq;
 using _Project.Scripts.Core.Signals;
 using _Project.Scripts.Domain.Gameplay;
 using _Project.Scripts.Domain.Gameplay.Interfaces;
+using Cysharp.Threading.Tasks;
 using Fusion;
 using UnityEngine;
 using Zenject;
@@ -164,6 +165,24 @@ namespace _Project.Scripts.Gameplay.Upgrades
             if (_playerStats == null) return;
             if (IsUpgradeSelected) return;
 
+            var isValidChoice = false;
+            foreach (var t in _networkChoices)
+            {
+                if (t == type && type != default)
+                {
+                    isValidChoice = true;
+                    break;
+                }
+            }
+
+            if (isValidChoice)
+            {
+                Debug.LogWarning($"[Server] Rejecting upgrade request! " +
+                                 $"Player {Object.InputAuthority} tried to select {type}, " +
+                                 $"which is not in their current network choices.");
+                return;
+            }
+            
             IsUpgradeSelected = true;
             
             _playerStats.ApplyUpgrade(type);

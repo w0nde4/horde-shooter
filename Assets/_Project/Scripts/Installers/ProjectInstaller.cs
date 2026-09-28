@@ -1,9 +1,6 @@
 ﻿using _Project.Scripts.Core.Interfaces;
 using _Project.Scripts.Core.Signals;
-using _Project.Scripts.Domain.Gameplay.Interfaces;
 using _Project.Scripts.Domain.Gameplay.Signals;
-using _Project.Scripts.Installers.Bootstrap;
-using _Project.Scripts.Presentation.UI;
 using _Project.Scripts.Services;
 using _Project.Scripts.Services.Network;
 using _Project.Scripts.Services.Presentation;

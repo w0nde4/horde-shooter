@@ -47,9 +47,15 @@ namespace _Project.Scripts.Services.Network
             Transform parent, Action<GameObject> onBeforeSpawn = null)
         {
             var runner = _networkService.Runner;
-            if (runner == null || !runner.IsRunning || !runner.IsServer)
+            if (runner == null || !runner.IsRunning)
             {
-                Debug.LogWarning($"FusionSpawnService: Spawning attempt for {prefab.name} is blocked. Network spawn is only available for Host/Server.");
+                Debug.LogWarning($"FusionSpawnService: Spawning attempt for {prefab.name} is blocked. Runner is not ready.");
+                return null;
+            }
+
+            if (!runner.IsServer)
+            {
+                Debug.LogWarning($"FusionSpawnService: Spawning attempt for {prefab.name} is blocked. Local instance is a pure Client.");
                 return null;
             }
             

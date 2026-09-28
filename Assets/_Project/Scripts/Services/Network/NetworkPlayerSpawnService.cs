@@ -34,17 +34,22 @@ namespace _Project.Scripts.Services.Network
         
         public async UniTask<GameObject> SpawnPlayerAsync(string ownerID, Vector3 position, Quaternion rotation, int? playerRefRaw = null)
         {
-            if (!playerRefRaw.HasValue)
+            var runner = _networkService.Runner;
+            if (runner == null || !runner.IsRunning)
             {
-                Debug.LogError("NetworkPlayerSpawnService: playerRefRaw is required for networked spawn");
-
+                Debug.LogError("NetworkPlayerSpawnService: Runner is not available.");
                 return null;
             }
 
-            var runner = _networkService.Runner;
-            if (runner == null)
+            if (runner.IsClient)
             {
-                Debug.LogError("NetworkPlayerSpawnService: runner is not available.");
+                Debug.LogWarning("NetworkPlayerSpawnService: Spawning blocked. Client cannot spawn players.");
+                return null;
+            }
+
+            if (string.IsNullOrEmpty(_config.playerPrefabAddress))
+            {
+                Debug.LogError("NetworkPlayerSpawnService: playerPrefabAddress is not set in config");
                 return null;
             }
 
@@ -58,7 +63,10 @@ namespace _Project.Scripts.Services.Network
                 return null;
             }
 
-            var inputAuthority = PlayerRef.FromEncoded(playerRefRaw.Value);
+            var inputAuthority = playerRefRaw.HasValue
+                ? PlayerRef.FromEncoded(playerRefRaw.Value)
+                : runner.LocalPlayer;
+            
             var spawned = runner.Spawn(networkObject, position, rotation, inputAuthority);
             
             if (spawned == null) return null;
@@ -66,6 +74,7 @@ namespace _Project.Scripts.Services.Network
             _registry.RegisterPlayer(spawned.gameObject, ownerID);
             var stats = ResolvePlayerStats(spawned.gameObject);
             _signalBus.Fire(new PlayerSpawnedSignal(spawned.gameObject, stats, ownerID));
+            
             return spawned.gameObject;
         }
 

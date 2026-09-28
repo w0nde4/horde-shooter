@@ -21,9 +21,6 @@ namespace _Project.Scripts.Installers
                 .NonLazy();
 
             // === Global Interfaces ===
-            Container.Bind<IConfigProvider>()
-                .To<ConfigProviderService>()
-                .AsSingle();
             Container.Bind<IDamageService>()
                 .To<CombatService>()
                 .AsSingle();
@@ -44,7 +41,6 @@ namespace _Project.Scripts.Installers
             Container.DeclareSignal<PlayerLeaveRequestSignal>().OptionalSubscriber();
             Container.DeclareSignal<ShotFiredSignal>().OptionalSubscriber();
             Container.DeclareSignal<DamageAppliedSignal>().OptionalSubscriber();
-            Container.DeclareSignal<OpenUpgradeUISignal>().OptionalSubscriber();
             Container.DeclareSignal<ReloadStateChangedSignal>().OptionalSubscriber();
             Container.DeclareSignal<UpgradeSelectionStartedSignal>().OptionalSubscriber();
             Container.DeclareSignal<UpgradeSelectionEndedSignal>().OptionalSubscriber();

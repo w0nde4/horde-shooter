@@ -22,7 +22,7 @@ namespace _Project.Scripts.Presentation.UI
         [SerializeField] private UpgradeVisualConfig visualConfig;
 
         private Action<UpgradeType> _onSelectedCallback;
-        private readonly List<UpgradeButtonView> _spawnedButtons = new();
+        private readonly List<UpgradeButtonView> _buttonPool = new();
 
         private void Awake()
         {
@@ -32,22 +32,33 @@ namespace _Project.Scripts.Presentation.UI
         public void ShowUpgrades(List<UpgradeType> choices, Action<UpgradeType> onSelected)
         {
             _onSelectedCallback = onSelected;
-            ClearButtons();
+            DeactivateAllButtons();
 
             if (upgradeText != null)
             {
                 upgradeText.text = "SELECT YOUR UPGRADE";
             }
 
-            foreach (var type in choices)
+            for (var i = 0; i < choices.Count; i++)
             {
-                var btnInstance = Instantiate(buttonPrefab, upgradeGroup);
+                var type = choices[i];
+                UpgradeButtonView btnInstance;
+
+                if (i < _buttonPool.Count)
+                {
+                    btnInstance = _buttonPool[i];
+                }
+                else
+                {
+                    btnInstance = Instantiate(buttonPrefab, upgradeGroup);
+                    _buttonPool.Add(btnInstance);
+                }
+
                 btnInstance.gameObject.name = "UpgradeButton_" + type;
                 var visualData = visualConfig.GetVisualData(type);
                 
                 btnInstance.Setup(visualData, HandleUpgradeSelected);
-                
-                _spawnedButtons.Add(btnInstance);
+                btnInstance.gameObject.SetActive(true);
             }
 
             if (panelRoot != null)
@@ -68,16 +79,24 @@ namespace _Project.Scripts.Presentation.UI
             }
 
             _onSelectedCallback?.Invoke(type);
-            ClearButtons();
+            DeactivateAllButtons();
         }
 
-        private void ClearButtons()
+        private void DeactivateAllButtons()
         {
-            foreach (var btn in _spawnedButtons)
+            foreach (var button in _buttonPool)
             {
-                if (btn != null) Destroy(btn.gameObject);
+                if (button != null)
+                {
+                    button.gameObject.SetActive(false);
+                }
             }
-            _spawnedButtons.Clear();
+        }
+
+        private void OnDestroy()
+        {
+            _buttonPool.Clear();
+            _onSelectedCallback = null;
         }
     }
 }

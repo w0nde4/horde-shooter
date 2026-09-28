@@ -93,6 +93,8 @@ namespace _Project.Scripts.Gameplay.Upgrades
 
         public void ShowUpgrades()
         {
+            if(!HasStateAuthority) return;
+            
             IsUpgradeSelected = false;
 
             for (var i = 0; i < _networkChoices.Length; i++)
@@ -166,21 +168,22 @@ namespace _Project.Scripts.Gameplay.Upgrades
             if (IsUpgradeSelected) return;
 
             var isValidChoice = false;
-            foreach (var t in _networkChoices)
+            var requestedTypeIndex = (int)type;
+            for (var i = 0; i < _networkChoices.Length; i++)
             {
-                if (t == type && type != default)
+                var choiceIndex = (int)_networkChoices[i];
+                if (choiceIndex == requestedTypeIndex && type != default)
                 {
                     isValidChoice = true;
                     break;
                 }
             }
 
-            if (isValidChoice)
+            if (!isValidChoice)
             {
-                Debug.LogWarning($"[Server] Rejecting upgrade request! " +
-                                 $"Player {Object.InputAuthority} tried to select {type}, " +
-                                 $"which is not in their current network choices.");
-                return;
+                var currentOptions = string.Join(", ", _networkChoices);
+                Debug.LogWarning($"[Server] Rejecting upgrade request! Player {Object.InputAuthority} tried to select {type}. Current choices in network state: [{currentOptions}]");
+                return; 
             }
             
             IsUpgradeSelected = true;

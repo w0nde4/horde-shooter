@@ -51,27 +51,8 @@ namespace _Project.Scripts.Installers
             Container.Bind<WeaponVFXConfig>()
                 .FromInstance(weaponVFXConfig)
                 .AsSingle();
-            
-            // === Network check ===
-            if (useNetwork)
-            {
-                Container.Bind<IPlayerSpawnService>()
-                    .To<NetworkPlayerSpawnService>()
-                    .AsSingle();
-                Container.Bind<ISpawnService>()
-                    .To<FusionSpawnService>()
-                    .AsSingle();
-            }
-            else
-            {
-                Container.Bind<IPlayerSpawnService>()
-                    .To<OfflinePlayerSpawnService>()
-                    .AsSingle();
-                Container.Bind<ISpawnService>()
-                    .To<OfflineSpawnService>()
-                    .AsSingle();
-            }
-            
+
+
             // === Player-scoped services ===
             Container.Bind<PlayerRegistry>()
                 .AsSingle()
@@ -79,7 +60,7 @@ namespace _Project.Scripts.Installers
             Container.BindInterfacesAndSelfTo<NetworkPlayerSpawnHandler>()
                 .AsSingle()
                 .NonLazy();
-            
+
             // === Presentation ===
             Container.BindInterfacesAndSelfTo<WeaponFireAudioVisualizer>()
                 .AsSingle();
@@ -89,8 +70,8 @@ namespace _Project.Scripts.Installers
                 .AsSingle();
             Container.BindInterfacesAndSelfTo<WeaponImpactVFXVisualizer>()
                 .AsSingle();
-            
-            // === Interfaces for waves/enemies/upgrades ===
+
+            // === Interfaces ===
             Container.Bind<IWaveOrchestrator>()
                 .To<WaveOrchestrator>()
                 .AsSingle();
@@ -100,6 +81,12 @@ namespace _Project.Scripts.Installers
             Container.Bind<IWaveSpawner>()
                 .To<WaveSpawner>()
                 .FromComponentInHierarchy()
+                .AsSingle();
+            Container.Bind<IPlayerSpawnService>()
+                .To<NetworkPlayerSpawnService>()
+                .AsSingle();
+            Container.Bind<ISpawnService>()
+                .To<FusionSpawnService>()
                 .AsSingle();
 
             // === MonoBehaviour ===

@@ -14,28 +14,26 @@ namespace _Project.Scripts.Gameplay.Weapons
         [Header("Configuration")]
         [SerializeField] private GrenadeConfig grenadeConfig;
         [SerializeField] private Transform throwOrigin;
-        
         [SerializeField] private NetworkObject networkGrenadePrefab;
 
         [Inject] private PlayerStats _playerStats;
-        [Inject] private ISpawnService _spawnService;
         
-        [Networked] private float _lastThrowTime { get; set; } = -1000f;
+        [Networked] private float LastThrowTime { get; set; } = -1000f;
 
         private NetworkButtons _oldButtons;
-        private PlayerIntent _intent;
-        private float _lastThrowTimeOffline = -Mathf.Infinity;
         
-        public PlayerIntent Intent
-        {
-            get => _intent;
-            set => _intent = value; 
-        }
-
         private void Start()
         {
             if (throwOrigin == null)
                 Debug.LogError("GrenadeThrower: Throw origin is not assigned!");
+        }
+
+        public override void Spawned()
+        {
+            if (Object.HasStateAuthority)
+            {
+                LastThrowTime = -1000f;
+            }
         }
 
         public override void FixedUpdateNetwork()
@@ -47,60 +45,32 @@ namespace _Project.Scripts.Gameplay.Weapons
                 
                 if (grenadePressedThisTick && CanThrowNetwork())
                 {
-                    if (HasStateAuthority)
+                    if (Object.HasStateAuthority)
                     {
                         ThrowGrenadeNetwork();
                     }
-                    
-                    else if (HasInputAuthority)
-                    {
-                        Rpc_RequestGrenadeThrow();
-                    }
                 }
-
+                
                 _oldButtons = input.Buttons;
             }
         }
 
-        private void Update()
-        {
-            if (Runner == null || !Runner.IsRunning)
-            {
-                if (_intent.Grenade && CanThrowOffline())
-                {
-                    ThrowGrenadeOffline();
-                    _intent.Grenade = false;
-                }
-            }
-        }
-        
         private bool CanThrowNetwork()
         {
             if (grenadeConfig == null || _playerStats == null) return false;
             
             var cooldown = grenadeConfig.throwCooldown * _playerStats.GrenadeCooldownMultiplier;
-            return Runner.SimulationTime >= _lastThrowTime + cooldown;
-        }
-
-        private bool CanThrowOffline()
-        {
-            if (grenadeConfig == null || _playerStats == null) return false;
-            
-            var cooldown = grenadeConfig.throwCooldown * _playerStats.GrenadeCooldownMultiplier;
-            return Time.time >= _lastThrowTimeOffline + cooldown;
+            return Runner.SimulationTime >= LastThrowTime + cooldown;
         }
 
         private void ThrowGrenadeNetwork()
         {
-            if (!HasStateAuthority) return;
-
             if (networkGrenadePrefab == null)
             {
                 Debug.LogError("GrenadeThrower: networkGrenadePrefab не назначен в инспекторе!");
                 return;
             }
-
-            Debug.Log("Trying to spawn network grenade");
+            
             var grenadeObj = Runner.Spawn(
                 networkGrenadePrefab,
                 throwOrigin.position,
@@ -110,50 +80,13 @@ namespace _Project.Scripts.Gameplay.Weapons
 
             if (grenadeObj != null)
             {
-                Debug.Log("Grenade spawned");
                 grenadeObj.gameObject.SetActive(true);
                 InitializeAndPush(grenadeObj.gameObject);
             }
 
-            _lastThrowTime = Runner.SimulationTime;
+            LastThrowTime = Runner.SimulationTime;
         }
-        
-        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-        private void Rpc_RequestGrenadeThrow()
-        {
-            ThrowGrenadeNetwork();
-        }
-        
-        private async void ThrowGrenadeOffline()
-        {
-            if (string.IsNullOrEmpty(grenadeConfig.prefabAddress))
-            {
-                Debug.LogError("GrenadeThrower: Grenade prefab address is not assigned in GrenadeConfig!");
-                return;
-            }
-            
-            var grenadeObject = await _spawnService.SpawnAsync(
-                grenadeConfig.prefabAddress,
-                throwOrigin.position,
-                throwOrigin.rotation
-            );
 
-            if (grenadeObject == null) return;
-
-            grenadeObject.SetActive(true);
-            grenadeObject.gameObject.SetActive(true);
-                
-            var rb = grenadeObject.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                rb.isKinematic = false;
-                var force = throwOrigin.forward * grenadeConfig.throwForce + Vector3.up * grenadeConfig.upwardForce;
-                rb.AddForce(force, ForceMode.Impulse);
-            }
-        
-            _lastThrowTimeOffline = Time.time;
-        }
-        
         private void InitializeAndPush(GameObject grenadeObject)
         {
             var grenade = grenadeObject.GetComponent<Grenade>();
@@ -167,14 +100,6 @@ namespace _Project.Scripts.Gameplay.Weapons
             {
                 var force = throwOrigin.forward * grenadeConfig.throwForce + Vector3.up * grenadeConfig.upwardForce;
                 rb.AddForce(force, ForceMode.Impulse);
-            }
-        }
-        
-        public override void Spawned()
-        {
-            if (Runner.IsServer)
-            {
-                _lastThrowTime = -1000f;
             }
         }
     }

@@ -13,13 +13,12 @@ namespace _Project.Scripts.Gameplay.Player
 {
     public class PlayerInputHandler : NetworkBehaviour, INetworkRunnerCallbacks
     {
-        [SerializeField] private InputActionAsset inputActionAsset; // inputactions file
+        [SerializeField] private InputActionAsset inputActionAsset; // InputActions file
 
         [Inject] private SignalBus _signalBus;
 
         private bool _isInputBlocked;
-        private InputActionAsset _inputActions; // instance
-        private PlayerIntent _localOfflineIntent;
+        private InputActionAsset _inputActions; // Instance
 
         private struct PlayerActions
         {
@@ -34,9 +33,8 @@ namespace _Project.Scripts.Gameplay.Player
         private bool _grenadePressed;
         private Vector2 _rawMouseAccumulated;
         private int _selectedWeaponIndexCache = -1;
-    
+
         public Vector2 RawMouseAccumulated => _rawMouseAccumulated;
-        public PlayerIntent LocalOfflineIntent => _localOfflineIntent;
 
         public override void Spawned()
         {
@@ -66,43 +64,14 @@ namespace _Project.Scripts.Gameplay.Player
 
         private void Update()
         {
-            if (_isInputBlocked)
-            {
-                _localOfflineIntent = default;
-                return;
-            }
-            
-            // Offline
-            if (Runner == null || !Runner.IsRunning)
-            {
-                EnsureInputActions();
-                if (_inputActions == null) return;
-           
-                _localOfflineIntent.Move = _actions.Move.ReadValue<Vector2>();
-                _localOfflineIntent.Look = _actions.Look.ReadValue<Vector2>();
-                _localOfflineIntent.Jump = _actions.Jump.WasPressedThisFrame();
-                _localOfflineIntent.Sprint = _actions.Sprint.IsPressed();
-                _localOfflineIntent.Fire = _actions.Fire.IsPressed();
-                _localOfflineIntent.Reload = _actions.Reload.WasPressedThisFrame();
-                _localOfflineIntent.Grenade = _actions.Grenade.WasPressedThisFrame();
-            
-                if (_actions.WeaponOne.WasPressedThisFrame()) _localOfflineIntent.WeaponSwitchIndex = 0;
-                else if (_actions.WeaponTwo.WasPressedThisFrame()) _localOfflineIntent.WeaponSwitchIndex = 1;
-                else if (_actions.NextWeapon.triggered) _localOfflineIntent.WeaponSwitchIndex = 100;
-                else if (_actions.PreviousWeapon.triggered) _localOfflineIntent.WeaponSwitchIndex = 101;
-                else _localOfflineIntent.WeaponSwitchIndex = -1;
-            
-                if (TryGetComponent<PlayerLook>(out var look)) look.Intent = _localOfflineIntent;
-                if (TryGetComponent<Weapons.WeaponController>(out var weapons)) weapons.Intent = _localOfflineIntent;
-                if (TryGetComponent<Weapons.GrenadeThrower>(out var grenade)) grenade.Intent = _localOfflineIntent;
-
-            
-                return;
-            }
-
-            // Network
             if (!HasInputAuthority || _inputActions == null) return;
 
+            if(_isInputBlocked)
+            {
+                _selectedWeaponIndexCache = -1;
+                return;
+            }
+            
             _rawMouseAccumulated += _actions.Look.ReadValue<Vector2>();
         
             if (_actions.Jump.WasPressedThisFrame()) _jumpPressed = true;
@@ -149,7 +118,7 @@ namespace _Project.Scripts.Gameplay.Player
             data.Buttons.Set(PlayerButtons.Reload, _reloadPressed);
             data.Buttons.Set(PlayerButtons.Grenade, _grenadePressed);
 
-            // buffers reset
+            // Buffers Reset
             _jumpPressed = false;
             _reloadPressed = false;
             _grenadePressed = false;

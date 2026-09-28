@@ -1,9 +1,6 @@
 ﻿using System;
-using _Project.Scripts.Core.Signals;
-using _Project.Scripts.Domain.Gameplay;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Domain.Gameplay.Interfaces;
-using _Project.Scripts.Gameplay.Upgrades;
 using _Project.Scripts.Services;
 using _Project.Scripts.Services.Network;
 using Cysharp.Threading.Tasks;
@@ -30,8 +27,7 @@ namespace _Project.Scripts.Gameplay.Waves
 
         public void Awake()
         {
-            _playerRegistry.OnPlayerRegistered += OnplayerRegistered;
-            //_signalBus.Subscribe<PlayerSpawnedSignal>(OnPlayerSpawned);
+            _playerRegistry.OnPlayerRegistered += OnPlayerRegistered;
             if (_playerRegistry.HasPlayer && !_cycleStarted && IsAuthoritative)
             {
                 _cycleStarted = true;
@@ -39,7 +35,7 @@ namespace _Project.Scripts.Gameplay.Waves
             }
         }
         
-        private void OnplayerRegistered(GameObject player)
+        private void OnPlayerRegistered(GameObject player)
         {
             if(_cycleStarted || !IsAuthoritative) return;
             _cycleStarted = true;
@@ -53,13 +49,6 @@ namespace _Project.Scripts.Gameplay.Waves
             _orchestrator.StartWaveCycle(this.GetCancellationTokenOnDestroy()).Forget();
         }
 
-        private void OnPlayerSpawned()
-        {
-            if(_cycleStarted) return;
-            _cycleStarted = true;
-            StartCycle();
-        }
-
         private void Start()
         {
             if (_waveSpawner != null) _waveSpawner.AllEnemiesDefeated += OnAllEnemiesDefeated;
@@ -70,8 +59,7 @@ namespace _Project.Scripts.Gameplay.Waves
         private void OnDestroy()
         {
             if (_waveSpawner != null) _waveSpawner.AllEnemiesDefeated -= OnAllEnemiesDefeated;
-            _playerRegistry.OnPlayerRegistered -= OnplayerRegistered;
-            //_signalBus.TryUnsubscribe<PlayerSpawnedSignal>(OnPlayerSpawned);
+            _playerRegistry.OnPlayerRegistered -= OnPlayerRegistered;
             _orchestrator.OnWaveStart -= OnWaveStart;
             _orchestrator.OnWaveComplete -= OnWaveComplete;
         }

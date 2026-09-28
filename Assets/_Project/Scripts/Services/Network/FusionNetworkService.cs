@@ -27,14 +27,7 @@ namespace _Project.Scripts.Services.Network
         
         public void Initialize()
         {
-            var go = new GameObject("NetworkRunner");
-            _runner = go.AddComponent<NetworkRunner>();
-            _runner.AddCallbacks(this);
-            _sceneManager = go.AddComponent<NetworkSceneManagerDefault>();
-
-            _provider = _container.InstantiateComponent<ZenjectNetworkObjectProvider>(go);
-            
-            UnityEngine.Object.DontDestroyOnLoad(go);
+            CreateAndConfigureRunner();
         }
         
         public async UniTask StartGameInternal(GameMode gameMode, string sessionName, string gameplaySceneName, int playersCount)
@@ -84,6 +77,19 @@ namespace _Project.Scripts.Services.Network
                 _runner.Shutdown();
             
             _isRunning = false;
+        }
+
+        private void CreateAndConfigureRunner()
+        {
+            var go = new GameObject("NetworkRunner");
+            _runner = go.AddComponent<NetworkRunner>();
+            _sceneManager = go.AddComponent<NetworkSceneManagerDefault>();
+            _provider = _container.InstantiateComponent<ZenjectNetworkObjectProvider>(go);
+            
+            _runner.AddCallbacks(this);
+            _runner.AddCallbacks(_provider);
+            
+            UnityEngine.Object.DontDestroyOnLoad(go);
         }
         
         private void RecreateRunner()

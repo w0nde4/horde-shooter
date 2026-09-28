@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
@@ -21,14 +20,22 @@ namespace _Project.Scripts.Domain.Gameplay
 
         protected override NetworkObject InstantiatePrefab(NetworkRunner runner, NetworkObject prefab)
         {
+            var wasActive = prefab.gameObject.activeSelf;
+            if(wasActive) prefab.gameObject.SetActive(false);
+            
             var go = Instantiate(prefab.gameObject);
+            if(wasActive) prefab.gameObject.SetActive(true);
+            
             var no = go.GetComponent<NetworkObject>();
-
+            
             var sceneContext = FindFirstObjectByType<SceneContext>();
 
             if (sceneContext != null && sceneContext.Container != null)
             {
                 sceneContext.Container.InjectGameObject(go);
+                
+                go.SetActive(true);
+                Debug.Log($"[NETWORK] {go.name} injected successfully before Awake through SceneContext.");
             }
             else
             {
@@ -37,7 +44,7 @@ namespace _Project.Scripts.Domain.Gameplay
                     _pendingObjects.Add(go);
                 }
 
-                InjectWithTimeoutAsync(go).Forget();
+                Debug.LogWarning($"[NETWORK] SceneContext not found. {go.name} added to scene load waiting queue.");
             }
 
             return no;
@@ -46,18 +53,18 @@ namespace _Project.Scripts.Domain.Gameplay
 
         public void OnSceneLoadDone(NetworkRunner runner)
         {
-            Debug.Log("[NETWORK] Событие Fusion: Сцена успешно загружена. Начинаем инжект объектов.");
+            Debug.Log("[NETWORK] Fusion event: Scene loaded successfully. Start injecting.");
             InjectAllPendingObjects();
-        }
-
-        public void OnSceneLoadStart(NetworkRunner runner)
-        {
         }
 
         private void InjectAllPendingObjects()
         {
             var sceneContext = FindFirstObjectByType<SceneContext>();
-            if (sceneContext == null || sceneContext.Container == null) return;
+            if (sceneContext == null || sceneContext.Container == null)
+            {
+                Debug.LogError("[NETWORK] Fatal error: Scene loaded, but SceneContext is null! Pended objects is not injected.");
+                return;
+            }
 
             lock (_pendingObjects)
             {
@@ -66,7 +73,8 @@ namespace _Project.Scripts.Domain.Gameplay
                     if (go != null)
                     {
                         sceneContext.Container.InjectGameObject(go);
-                        Debug.Log($"[EVENT INJECT] {go.name} успешно заинжекчен через OnSceneLoadDone.");
+                        go.SetActive(true);
+                        Debug.Log($"[EVENT INJECT] Pended object {go.name} injected successfully through OnSceneLoadDone.");
                     }
                 }
 
@@ -74,46 +82,9 @@ namespace _Project.Scripts.Domain.Gameplay
             }
         }
 
-        private async UniTaskVoid InjectWithTimeoutAsync(GameObject target)
-        {
-            var maxAttempts = 20;
-            while (maxAttempts > 0 && target != null)
-            {
-                var sceneContext = FindFirstObjectByType<SceneContext>();
-                if (sceneContext != null && sceneContext.Container != null)
-                {
-                    lock (_pendingObjects)
-                    {
-                        if (_pendingObjects.Contains(target))
-                        {
-                            sceneContext.Container.InjectGameObject(target);
-                            _pendingObjects.Remove(target);
-                            Debug.Log($"[TIMEOUT INJECT] {target.name} заинжекчен через резервное ожидание.");
-                        }
-                    }
+        public void OnSceneLoadStart(NetworkRunner runner)
+        { }
 
-                    return;
-                }
-
-                maxAttempts--;
-                await UniTask.Delay(100);
-            }
-
-            if (target != null)
-            {
-                lock (_pendingObjects)
-                {
-                    if (_pendingObjects.Contains(target))
-                    {
-                        _container.InjectGameObject(target);
-                        _pendingObjects.Remove(target);
-                        Debug.LogWarning(
-                            $"[FALLBACK INJECT] Не удалось дождаться сцены для {target.name}. Инжект в ProjectContext.");
-                    }
-                }
-            }
-        }
-        
         public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
         {
         }

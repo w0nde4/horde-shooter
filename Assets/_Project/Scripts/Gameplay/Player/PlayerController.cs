@@ -15,15 +15,12 @@ namespace _Project.Scripts.Gameplay.Player
         [Inject] private PlayerStats _stats;
     
         private NetworkCharacterController _controller;
-        private PlayerInputHandler _inputHandler;
-        private float _verticalVelocity;
         
         [Networked] private NetworkButtons _oldButtons { get; set; }
 
         private void Awake()
         {
             _controller = GetComponent<NetworkCharacterController>();
-            _inputHandler = GetComponent<PlayerInputHandler>();
         }
 
         public override void FixedUpdateNetwork()
@@ -33,14 +30,6 @@ namespace _Project.Scripts.Gameplay.Player
                 var pressed = input.Buttons.GetPressed(_oldButtons);
                 ApplyNetworkMovement(input, pressed);
                 _oldButtons = input.Buttons;
-            }
-        }
-
-        private void Update()
-        {
-            if (Runner == null || !Runner.IsRunning)
-            {
-                ApplyOfflineMovement();
             }
         }
 
@@ -54,23 +43,6 @@ namespace _Project.Scripts.Gameplay.Player
             var moveDirection = transform.right * input.Move.x + transform.forward * input.Move.y;
 
             if (pressed.IsSet(PlayerButtons.Jump) && _controller.Grounded)
-            {
-                _controller.Jump();
-            }
-                
-            _controller.Move(moveDirection);
-        }
-
-        private void ApplyOfflineMovement()
-        {
-            var intent = _inputHandler.LocalOfflineIntent;
-            var baseSpeed = _stats?.MoveSpeed ?? _config.defaultMoveSpeed; 
-            var currentSpeed = intent.Sprint ? baseSpeed * _config.sprintMultiplier : baseSpeed;
-
-            _controller.maxSpeed = currentSpeed;
-            var moveDirection = transform.right * intent.Move.x + transform.forward * intent.Move.y;
-        
-            if (intent.Jump && _controller.Grounded)
             {
                 _controller.Jump();
             }

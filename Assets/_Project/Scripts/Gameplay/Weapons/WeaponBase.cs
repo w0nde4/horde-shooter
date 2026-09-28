@@ -13,7 +13,7 @@ namespace _Project.Scripts.Gameplay.Weapons
 {
     public abstract class WeaponBase : NetworkBehaviour
     {
-        private const int BulletBufferCapacity = 32;
+        private const int BulletBufferCapacity = 256;
         
         [SerializeField] protected WeaponConfig config;
         

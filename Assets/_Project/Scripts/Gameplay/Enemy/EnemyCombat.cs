@@ -1,11 +1,10 @@
 ﻿using _Project.Scripts.Core.Interfaces;
-using Fusion;
 using UnityEngine;
 using Zenject;
 
 namespace _Project.Scripts.Gameplay.Enemy
 {
-    public class EnemyCombat : NetworkBehaviour
+    public class EnemyCombat : MonoBehaviour
     {
         [Header("Combat Settings")]
         [SerializeField] private float damage = 10f;
@@ -14,7 +13,7 @@ namespace _Project.Scripts.Gameplay.Enemy
         
         [Inject] private IDamageService _damageService;
 
-        [Networked] private TickTimer AttackCooldownTimer { get; set; }
+        private float _lastAttackTime = -Mathf.Infinity;
 
         public float AttackRange => attackRange;
         public float AttackCooldown => attackCooldown;
@@ -29,7 +28,7 @@ namespace _Project.Scripts.Gameplay.Enemy
         {
             if (target == null) return;
             if (!IsTargetInRange(target)) return;
-            if (AttackCooldownTimer.IsRunning && !AttackCooldownTimer.Expired(Runner)) return;
+            if (Time.time < _lastAttackTime + attackCooldown) return;
 
             var damageable = target.GetComponent<IDamageable>();
             if (damageable != null)
@@ -39,7 +38,7 @@ namespace _Project.Scripts.Gameplay.Enemy
                 
                 _damageService.ApplyDamage(damage, damageable, hitPoint, hitNormal, gameObject);
 
-                AttackCooldownTimer = TickTimer.CreateFromSeconds(Runner, attackCooldown);
+                _lastAttackTime = Time.time;
                 Debug.Log($"Enemy attacked {target.name} for {damage} damage");
             }
             else

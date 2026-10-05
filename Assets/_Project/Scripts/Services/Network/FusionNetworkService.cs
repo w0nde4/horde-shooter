@@ -105,6 +105,18 @@ namespace _Project.Scripts.Services.Network
             UnityEngine.Object.DontDestroyOnLoad(go);
         }
 
+        public async UniTask ExitToMainMenuAsync(string mainMenuSceneName)
+        {
+            if (_runner != null && _runner.IsRunning)
+            {
+                await _runner.Shutdown();
+            }
+
+            _isRunning = false;
+            
+            SceneManager.LoadScene(mainMenuSceneName);
+        }
+
         public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
 
         public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }

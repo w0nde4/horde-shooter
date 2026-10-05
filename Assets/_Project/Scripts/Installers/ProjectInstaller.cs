@@ -44,6 +44,7 @@ namespace _Project.Scripts.Installers
             Container.DeclareSignal<ReloadStateChangedSignal>().OptionalSubscriber();
             Container.DeclareSignal<UpgradeSelectionStartedSignal>().OptionalSubscriber();
             Container.DeclareSignal<UpgradeSelectionEndedSignal>().OptionalSubscriber();
+            Container.DeclareSignal<GameOverStartedSignal>().OptionalSubscriber();
         }
     }
 }

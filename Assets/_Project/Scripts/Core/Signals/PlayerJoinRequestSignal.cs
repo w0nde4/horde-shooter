@@ -1,6 +1,4 @@
-﻿using Fusion;
-
-namespace _Project.Scripts.Core.Signals
+﻿namespace _Project.Scripts.Core.Signals
 {
     public readonly struct PlayerJoinRequestSignal
     {

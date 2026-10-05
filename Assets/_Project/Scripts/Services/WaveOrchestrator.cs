@@ -15,6 +15,7 @@ namespace _Project.Scripts.Services
         private readonly IWaveSpawner _waveSpawner;
         private readonly PlayerRegistry _playerRegistry;
         
+        private CancellationTokenSource _waveCycleCts;
         private int _currentWaveIndex;
         private bool _isWaveActive;
         
@@ -84,6 +85,21 @@ namespace _Project.Scripts.Services
 
             Debug.Log("All waves completed!");
         }
+        
+        public void ResetOrchestrator()
+        {
+            if (_waveCycleCts != null)
+            {
+                _waveCycleCts.Cancel();
+                _waveCycleCts.Dispose();
+            }
+
+            _waveCycleCts = new CancellationTokenSource();
+            _currentWaveIndex = 0;
+            _isWaveActive = false;
+        }
+
+        public CancellationToken GetToken() => _waveCycleCts?.Token ?? CancellationToken.None;
 
         public void OnAllEnemiesDefeated() => _isWaveActive = false;
     }

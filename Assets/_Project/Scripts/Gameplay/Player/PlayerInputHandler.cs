@@ -45,6 +45,7 @@ namespace _Project.Scripts.Gameplay.Player
                 
                 _signalBus.Subscribe<UpgradeSelectionStartedSignal>(OnSelectionStarted);
                 _signalBus.Subscribe<UpgradeSelectionEndedSignal>(OnSelectionEnded);
+                _signalBus.Subscribe<GameOverStartedSignal>(OnGameOverStarted);
             }
         }
 
@@ -56,11 +57,13 @@ namespace _Project.Scripts.Gameplay.Player
                 
                 _signalBus.TryUnsubscribe<UpgradeSelectionStartedSignal>(OnSelectionStarted);
                 _signalBus.TryUnsubscribe<UpgradeSelectionEndedSignal>(OnSelectionEnded);
+                _signalBus.TryUnsubscribe<GameOverStartedSignal>(OnGameOverStarted);
             }
         }
         
         private void OnSelectionStarted() => _isInputBlocked = true;
         private void OnSelectionEnded() => _isInputBlocked = false;
+        private void OnGameOverStarted() => _isInputBlocked = true;
 
         private void Update()
         {

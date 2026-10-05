@@ -1,9 +1,6 @@
-﻿using System;
-using _Project.Scripts.Core.Data;
-using _Project.Scripts.Domain.Gameplay.Data;
+﻿using _Project.Scripts.Domain.Gameplay.Data;
 using Fusion;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace _Project.Scripts.Gameplay.Weapons
 {
@@ -64,40 +61,53 @@ namespace _Project.Scripts.Gameplay.Weapons
             {
                 var pressed = input.Buttons.GetPressed(OldButtons);
                 
-                // === Network Weapon Switching ===
-                if (input.WeaponSwitchIndex >= 0)
-                {
-                    ProcessWeaponSwitchCommand(input.WeaponSwitchIndex); 
-                }
-
-                if (_currentWeapon == null)
-                {
-                    OldButtons = input.Buttons;
-                    return;
-                }
-
-                // === Network Reload ===
-                var reloadPressedThisTick = pressed.IsSet(PlayerButtons.Reload);
-                if (reloadPressedThisTick)
-                {
-                    _currentWeapon.Reload();
-                }
-
-                // === Network Firing ===
-                if (_currentWeapon.CanFire())
-                {
-                    var firePressedThisTick = pressed.IsSet(PlayerButtons.Fire);
-                    var isFireHeld = input.Buttons.IsSet(PlayerButtons.Fire);
-                    var shouldFire = _currentWeapon.IsAutomatic ? isFireHeld : firePressedThisTick;
-
-                    if (shouldFire)
-                    {
-                        _currentWeapon.TryFire();
-                    }
-                }
+                if (SwitchWeapon(input)) return;
+                
+                Reload(pressed);
+                
+                Fire(pressed, input);
                 
                 OldButtons = input.Buttons;
             }
+        }
+
+        private void Fire(NetworkButtons pressed, NetworkInputData input)
+        {
+            if (!_currentWeapon.CanFire()) return;
+            
+            var firePressedThisTick = pressed.IsSet(PlayerButtons.Fire);
+            var isFireHeld = input.Buttons.IsSet(PlayerButtons.Fire);
+            var shouldFire = _currentWeapon.IsAutomatic ? isFireHeld : firePressedThisTick;
+
+            if (shouldFire)
+            {
+                _currentWeapon.TryFire();
+            }
+        }
+
+        private void Reload(NetworkButtons pressed)
+        {
+            var reloadPressedThisTick = pressed.IsSet(PlayerButtons.Reload);
+            if (reloadPressedThisTick)
+            {
+                _currentWeapon.Reload();
+            }
+        }
+
+        private bool SwitchWeapon(NetworkInputData input)
+        {
+            if (input.WeaponSwitchIndex >= 0)
+            {
+                ProcessWeaponSwitchCommand(input.WeaponSwitchIndex); 
+            }
+
+            if (_currentWeapon == null)
+            {
+                OldButtons = input.Buttons;
+                return true;
+            }
+
+            return false;
         }
 
         private void ProcessWeaponSwitchCommand(int command)
@@ -105,8 +115,23 @@ namespace _Project.Scripts.Gameplay.Weapons
             if (weapons == null || weapons.Length == 0) return;
             
             var total = weapons.Length;
-            var nextIndex = CurrentWeaponIndex;
 
+            var nextIndex = CalculateNextWeaponIndex(command, total);
+
+            if (nextIndex >= 0 && nextIndex < total && nextIndex != CurrentWeaponIndex)
+            {
+                CurrentWeaponIndex = nextIndex;
+                
+                if (Object.HasStateAuthority)
+                {
+                    UpdateLocalWeaponInstance(nextIndex);
+                }
+            }
+        }
+
+        private int CalculateNextWeaponIndex(int command, int total)
+        {
+            var nextIndex = 0;
             switch (command)
             {
                 // "NextWeapon"
@@ -128,17 +153,9 @@ namespace _Project.Scripts.Gameplay.Weapons
                 }
             }
 
-            if (nextIndex >= 0 && nextIndex < total && nextIndex != CurrentWeaponIndex)
-            {
-                CurrentWeaponIndex = nextIndex;
-                
-                if (Object.HasStateAuthority)
-                {
-                    UpdateLocalWeaponInstance(nextIndex);
-                }
-            }
+            return nextIndex;
         }
-        
+
         private void UpdateLocalWeaponInstance(int index)
         {
             foreach (var weapon in weapons)

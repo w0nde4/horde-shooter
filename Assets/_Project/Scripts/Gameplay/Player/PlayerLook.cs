@@ -1,6 +1,8 @@
 ﻿using _Project.Scripts.Core.Data;
+using _Project.Scripts.Domain.Gameplay;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Domain.Gameplay.Data;
+using _Project.Scripts.Domain.Gameplay.Signals;
 using Fusion;
 using UnityEngine;
 using Zenject;
@@ -16,6 +18,8 @@ namespace _Project.Scripts.Gameplay.Player
         [SerializeField] private Transform cameraTransform;
 
         [Inject] private PlayerConfig _playerConfig;
+        [Inject] private SignalBus _signalBus;
+        [Inject] private RespawnCamera _respawnCamera;
 
         [Networked] private float NetworkedXRotation { get; set; }
         
@@ -23,6 +27,9 @@ namespace _Project.Scripts.Gameplay.Player
         private float _yRotation;
         private PlayerIntent _intent;
         private PlayerInputHandler _inputHandler;
+        private Camera _playerCamera;
+        private AudioListener _playerListener;
+        private bool _isRespawning;
         
         public PlayerIntent Intent
         {
@@ -34,14 +41,59 @@ namespace _Project.Scripts.Gameplay.Player
         {
             if (cameraTransform == null)
                 cameraTransform = GetComponentInChildren<Camera>()?.transform;
-            
-            if (HasInputAuthority) return;
-            
-            var remoteCamera = GetComponentInChildren<Camera>();
-            var remoteListener = GetComponentInChildren<AudioListener>();
 
-            if (remoteCamera != null) remoteCamera.enabled = false;
-            if (remoteListener != null) remoteListener.enabled = false;
+            if (cameraTransform != null)
+            {
+                _playerCamera = cameraTransform.GetComponent<Camera>();
+                _playerListener = cameraTransform.GetComponent<AudioListener>();
+            }
+
+            if (HasInputAuthority)
+            {
+                _signalBus.Subscribe<PlayerRespawnStartedSignal>(OnRespawnStarted);
+                _signalBus.Subscribe<PlayerRespawnEndedSignal>(OnRespawnEnded);
+                return;
+            }
+
+            if (_playerCamera != null) _playerCamera.enabled = false;
+            if (_playerListener != null) _playerListener.enabled = false;
+        }
+
+        public override void Despawned(NetworkRunner runner, bool hasState)
+        {
+            if (HasInputAuthority)
+            {
+                _signalBus.TryUnsubscribe<PlayerRespawnStartedSignal>(OnRespawnStarted);
+                _signalBus.TryUnsubscribe<PlayerRespawnEndedSignal>(OnRespawnEnded);
+            }
+            base.Despawned(runner, hasState);
+        }
+        
+        private void OnRespawnStarted(PlayerRespawnStartedSignal signal)
+        {
+            if (Object.InputAuthority != signal.Player) return;
+            SetRespawnCamera(true);
+        }
+
+        private void OnRespawnEnded(PlayerRespawnEndedSignal signal)
+        {
+            if (Object.InputAuthority != signal.Player) return;
+            SetRespawnCamera(false);
+        }
+        
+        public void SetRespawnCamera(bool isRespawning)
+        {
+            if (_isRespawning == isRespawning) return;
+            _isRespawning = isRespawning;
+
+            if (_playerCamera != null)  _playerCamera.enabled  = !isRespawning;
+            if (_playerListener != null) _playerListener.enabled = !isRespawning;
+
+            if (_respawnCamera?.Camera != null)
+                _respawnCamera.Camera.enabled = isRespawning;
+
+            if (_respawnCamera?.Listener != null)
+                _respawnCamera.Listener.enabled = isRespawning;
         }
 
         private void Awake()

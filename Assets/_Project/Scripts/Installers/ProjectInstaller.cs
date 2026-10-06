@@ -45,6 +45,8 @@ namespace _Project.Scripts.Installers
             Container.DeclareSignal<UpgradeSelectionStartedSignal>().OptionalSubscriber();
             Container.DeclareSignal<UpgradeSelectionEndedSignal>().OptionalSubscriber();
             Container.DeclareSignal<GameOverStartedSignal>().OptionalSubscriber();
+            Container.DeclareSignal<PlayerRespawnStartedSignal>().OptionalSubscriber();
+            Container.DeclareSignal<PlayerRespawnEndedSignal>().OptionalSubscriber();
         }
     }
 }

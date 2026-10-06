@@ -36,11 +36,6 @@ namespace _Project.Scripts.Presentation.UI
         {
             _playerRegistry.OnPlayerRegistered += OnPlayerRegistered;
             _playerRegistry.OnPlayerUnregistered += OnPlayerUnregistered;
-
-            if (_playerRegistry.TryGetPlayer("LocalPlayer", out var playerGo))
-            {
-                BindPlayer(playerGo);
-            }
         }
 
         private void OnDisable()
@@ -50,6 +45,19 @@ namespace _Project.Scripts.Presentation.UI
             
             UnbindPlayer();
             KillAllTweens();
+        }
+
+        private void TryBindExistingLocalPlayer()
+        {
+            foreach (var player in _playerRegistry.Players)
+            {
+                if (player == null) continue;
+                if (player.TryGetComponent<NetworkObject>(out var no) && no.HasInputAuthority)
+                {
+                    BindPlayer(player);
+                    return;
+                }
+            }
         }
 
         private void OnPlayerRegistered(GameObject playerGameObject)

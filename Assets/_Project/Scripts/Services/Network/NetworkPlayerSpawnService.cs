@@ -68,10 +68,8 @@ namespace _Project.Scripts.Services.Network
                 : runner.LocalPlayer;
             
             var spawned = runner.Spawn(networkObject, position, rotation, inputAuthority);
-            
             if (spawned == null) return null;
             
-            _registry.RegisterPlayer(spawned.gameObject, ownerID);
             var stats = ResolvePlayerStats(spawned.gameObject);
             _signalBus.Fire(new PlayerSpawnedSignal(spawned.gameObject, stats, ownerID));
             
@@ -87,14 +85,16 @@ namespace _Project.Scripts.Services.Network
         public void DespawnPlayer(string ownerID, bool destroyObject = true)
         {
             if(!_registry.TryGetPlayer(ownerID, out var player)) return;
-            _registry.UnregisterPlayer(ownerID);
             if (!destroyObject || player == null) return;
 
             var networkObject = player.GetComponent<NetworkObject>();
             if(networkObject != null && networkObject.IsValid && _networkService.Runner != null)
                 _networkService.Runner.Despawn(networkObject);
             else
+            {
+                _registry.UnregisterPlayer(ownerID);
                 Object.Destroy(player);
+            }
         }
 
         public void DespawnAll(bool destroyObjects = true)

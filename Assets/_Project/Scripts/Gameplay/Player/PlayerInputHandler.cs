@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using _Project.Scripts.Core.Data;
 using _Project.Scripts.Core.Signals;
 using _Project.Scripts.Domain.Gameplay.Data;
+using _Project.Scripts.Domain.Gameplay.Signals;
 using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
@@ -16,9 +17,12 @@ namespace _Project.Scripts.Gameplay.Player
         [SerializeField] private InputActionAsset inputActionAsset; // InputActions file
 
         [Inject] private SignalBus _signalBus;
-
-        private bool _isInputBlocked;
+        
         private InputActionAsset _inputActions; // Instance
+        private bool _isSelectionBlocked;
+        private bool _isRespawnBlocked;
+        private bool _isGameOverBlocked;
+        private bool IsInputBlocked => _isSelectionBlocked || _isRespawnBlocked || _isGameOverBlocked;
 
         private struct PlayerActions
         {
@@ -46,6 +50,8 @@ namespace _Project.Scripts.Gameplay.Player
                 _signalBus.Subscribe<UpgradeSelectionStartedSignal>(OnSelectionStarted);
                 _signalBus.Subscribe<UpgradeSelectionEndedSignal>(OnSelectionEnded);
                 _signalBus.Subscribe<GameOverStartedSignal>(OnGameOverStarted);
+                _signalBus.Subscribe<PlayerRespawnStartedSignal>(OnRespawnStarted);
+                _signalBus.Subscribe<PlayerRespawnEndedSignal>(OnRespawnEnded);
             }
         }
 
@@ -58,18 +64,34 @@ namespace _Project.Scripts.Gameplay.Player
                 _signalBus.TryUnsubscribe<UpgradeSelectionStartedSignal>(OnSelectionStarted);
                 _signalBus.TryUnsubscribe<UpgradeSelectionEndedSignal>(OnSelectionEnded);
                 _signalBus.TryUnsubscribe<GameOverStartedSignal>(OnGameOverStarted);
+                _signalBus.TryUnsubscribe<PlayerRespawnStartedSignal>(OnRespawnStarted);
+                _signalBus.TryUnsubscribe<PlayerRespawnEndedSignal>(OnRespawnEnded);
             }
         }
         
-        private void OnSelectionStarted() => _isInputBlocked = true;
-        private void OnSelectionEnded() => _isInputBlocked = false;
-        private void OnGameOverStarted() => _isInputBlocked = true;
+        private void OnSelectionStarted() => _isSelectionBlocked = true;
+        private void OnSelectionEnded() => _isSelectionBlocked = false;
+        private void OnGameOverStarted() => _isGameOverBlocked = true;
+
+        private void OnRespawnStarted(PlayerRespawnStartedSignal signal)
+        {
+            if(Object.InputAuthority != signal.Player) return;
+            _isRespawnBlocked = true;
+            _rawMouseAccumulated = Vector2.zero;
+        }
+        
+        private void OnRespawnEnded(PlayerRespawnEndedSignal signal)
+        {
+            if(Object.InputAuthority != signal.Player) return;
+            _isRespawnBlocked = false;
+            _rawMouseAccumulated = Vector2.zero;
+        }
 
         private void Update()
         {
             if (!HasInputAuthority || _inputActions == null) return;
 
-            if(_isInputBlocked)
+            if(IsInputBlocked)
             {
                 _selectedWeaponIndexCache = -1;
                 return;
@@ -91,7 +113,7 @@ namespace _Project.Scripts.Gameplay.Player
         {
             if (!HasInputAuthority || _inputActions == null) return;
 
-            if (_isInputBlocked)
+            if (IsInputBlocked)
             {
                 var blankData = new NetworkInputData
                 {

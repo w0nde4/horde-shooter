@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using _Project.Scripts.Core.Interfaces;
 using Fusion;
 using UnityEngine;
 
@@ -98,6 +99,23 @@ namespace _Project.Scripts.Services
             }
 
             return null;
+        }
+
+        public bool HasAnyLivingPlayers()
+        {
+            for (var i = 0; i < _playersList.Count; i++)
+            {
+                var playerObj = _playersList[i];
+                if(playerObj == null) continue;
+
+                if (playerObj.TryGetComponent<IPlayerHealth>(out var health))
+                {
+                    if (!health.IsDead)
+                        return true;
+                }
+            }
+
+            return false;
         }
     }
 }

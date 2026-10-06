@@ -32,7 +32,10 @@ namespace _Project.Scripts.Services.Network
         
         public async UniTask StartGameInternal(GameMode gameMode, string sessionName, string gameplaySceneName, int playersCount)
         {
-            if (_runner == null || _isRunning) return;
+            if (_isRunning) return;
+            
+            if(_runner == null)
+                CreateAndConfigureRunner();
            
             var sceneIndex = SceneUtility.GetBuildIndexByScenePath($"Assets/_Project/Scenes/{gameplaySceneName}.unity");
             if (sceneIndex < 0)
@@ -71,14 +74,6 @@ namespace _Project.Scripts.Services.Network
             await StartGameInternal(GameMode.Client, sessionName, gameplaySceneName, 2);
         }
 
-        public void Shutdown()
-        {
-            if (_runner != null && _runner.IsRunning)
-                _runner.Shutdown();
-            
-            _isRunning = false;
-        }
-
         private void CreateAndConfigureRunner()
         {
             var go = new GameObject("NetworkRunner");
@@ -89,19 +84,6 @@ namespace _Project.Scripts.Services.Network
             _runner.AddCallbacks(this);
             _runner.AddCallbacks(_provider);
             
-            UnityEngine.Object.DontDestroyOnLoad(go);
-        }
-        
-        private void RecreateRunner()
-        {
-            if (_runner != null)
-                UnityEngine.Object.Destroy(_runner.gameObject);
-
-            var go = new GameObject("NetworkRunner");
-            _runner = go.AddComponent<NetworkRunner>();
-            _runner.AddCallbacks(this);
-            _sceneManager = go.AddComponent<NetworkSceneManagerDefault>();
-            _provider = _container.InstantiateComponent<ZenjectNetworkObjectProvider>(go);
             UnityEngine.Object.DontDestroyOnLoad(go);
         }
 

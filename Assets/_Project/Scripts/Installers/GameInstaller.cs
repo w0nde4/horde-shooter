@@ -1,4 +1,5 @@
 ﻿using _Project.Scripts.Core.Interfaces;
+using _Project.Scripts.Domain.Gameplay;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Domain.Gameplay.Interfaces;
 using _Project.Scripts.Gameplay.Player;
@@ -22,7 +23,7 @@ namespace _Project.Scripts.Installers
         [SerializeField] private PlayerConfig playerConfig;
         [SerializeField] private WeaponAudioConfig weaponAudioConfig;
         [SerializeField] private WeaponVFXConfig weaponVFXConfig;
-        [SerializeField] private bool useNetwork;
+        [SerializeField] private Camera respawnCamera;
 
         public override void InstallBindings()
         {
@@ -52,7 +53,17 @@ namespace _Project.Scripts.Installers
                 .FromInstance(weaponVFXConfig)
                 .AsSingle();
 
+            if (respawnCamera == null)
+            {
+                Debug.LogError("GameInstaller: Respawn Camera is not assigned!");
+                return;
+            }
 
+            SetupRespawnCamera();
+            Container.Bind<RespawnCamera>()
+                .FromInstance(new RespawnCamera(respawnCamera))
+                .AsSingle();
+            
             // === Player-scoped services ===
             Container.Bind<PlayerRegistry>()
                 .AsSingle()
@@ -60,7 +71,7 @@ namespace _Project.Scripts.Installers
             Container.BindInterfacesAndSelfTo<NetworkPlayerSpawnHandler>()
                 .AsSingle()
                 .NonLazy();
-
+            
             // === Presentation ===
             Container.BindInterfacesAndSelfTo<WeaponFireAudioVisualizer>()
                 .AsSingle();
@@ -97,6 +108,13 @@ namespace _Project.Scripts.Installers
                 .To<UpgradeChoiceProvider>()
                 .FromComponentInHierarchy()
                 .AsSingle();
+        }
+
+        private void SetupRespawnCamera()
+        {
+            respawnCamera.enabled = false;
+            var respawnListener = respawnCamera.GetComponent<AudioListener>();
+            if (respawnListener != null) respawnListener.enabled = false;
         }
     }
 }

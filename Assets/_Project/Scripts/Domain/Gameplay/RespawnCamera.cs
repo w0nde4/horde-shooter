@@ -1,0 +1,16 @@
+﻿using UnityEngine;
+
+namespace _Project.Scripts.Domain.Gameplay
+{
+    public sealed class RespawnCamera
+    {
+        public Camera Camera { get; }
+        public AudioListener Listener { get; }
+
+        public RespawnCamera(Camera camera)
+        {
+            Camera = camera;
+            Listener = camera != null ? camera.GetComponent<AudioListener>() : null;
+        }
+    }
+}

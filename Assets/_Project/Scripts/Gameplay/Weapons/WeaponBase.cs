@@ -63,6 +63,21 @@ namespace _Project.Scripts.Gameplay.Weapons
             {
                 NetworkedAmmo = config.magazineSize;
             }
+
+            if (!HasInputAuthority)
+            {
+                ChangeLayerRecursively(transform, LayerMask.NameToLayer("Default"));
+            }
+        }
+
+        private void ChangeLayerRecursively(Transform root, int layer)
+        {
+            if (root == null) return;
+            root.gameObject.layer = layer;
+            foreach (Transform child in root)
+            {
+                ChangeLayerRecursively(child, layer);
+            }
         }
 
         public virtual bool CanFire()

@@ -8,7 +8,7 @@ using Zenject;
 
 namespace _Project.Scripts.Gameplay.Player
 {
-    public class PlayerHealth : NetworkBehaviour, IDamageable, IInitializable
+    public class PlayerHealth : NetworkBehaviour, IDamageable, IInitializable, IPlayerHealth
     {
         [Inject] private PlayerStats _playerStats;
         [Inject] private SignalBus _signalBus;
@@ -22,9 +22,13 @@ namespace _Project.Scripts.Gameplay.Player
         private NetworkBool IsDead { get; set; }
 
         private float _lastRenderHealth;
+
+        bool IPlayerHealth.IsDead => IsDead;
         
-        public event Action<float, float> OnHealthChanged; //current,max
+        public event Action<float, float> OnHealthChanged; //current, max
         public event Action OnDeath;
+        public event Action OnRespawned;
+        public event Action<PlayerHealth> Server_OnPlayerDied;
 
         public void Initialize()
         {
@@ -63,7 +67,17 @@ namespace _Project.Scripts.Gameplay.Player
                 CurrentHealth = 0f;
                 IsDead = true;
                 Debug.Log("[Server] Player died!");
+                Server_OnPlayerDied?.Invoke(this);
             }
+        }
+
+        public void Server_Respawn()
+        {
+            if(!HasStateAuthority) return;
+            
+            CurrentHealth = _playerStats.MaxHealth;
+            IsDead = false;
+            Debug.Log($"[Server] Executed respawn for player {Object.InputAuthority}");
         }
 
         private void RefreshMaxHealth()
@@ -99,6 +113,11 @@ namespace _Project.Scripts.Gameplay.Player
             {
                 OnDeath?.Invoke();
                 Debug.Log("[Client/Host] Executing local death for player.");
+            }
+            else
+            {
+                OnRespawned?.Invoke();
+                Debug.Log("[Client/Host] Executing local respawn for player.");
             }
         }
 

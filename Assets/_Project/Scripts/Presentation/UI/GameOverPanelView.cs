@@ -24,7 +24,6 @@ namespace _Project.Scripts.Presentation.UI
         [Header("Scene Names")]
         [SerializeField] private string mainMenuSceneName = "StartMenu";
 
-        [Inject] private PlayerRegistry _playerRegistry;
         [Inject] private FusionNetworkService _networkService;
         [Inject] private SignalBus _signalBus;
 
@@ -46,47 +45,13 @@ namespace _Project.Scripts.Presentation.UI
 
         private void OnEnable()
         {
-            _playerRegistry.OnPlayerRegistered += OnPlayerRegistered;
-            _playerRegistry.OnPlayerUnregistered += OnPlayerUnregistered;
+            _signalBus.Subscribe<GameOverStartedSignal>(ShowGameOverWindow);
         }
 
         private void OnDisable()
         {
-            _playerRegistry.OnPlayerRegistered -= OnPlayerRegistered;
-            _playerRegistry.OnPlayerUnregistered -= OnPlayerUnregistered;
-            UnbindPlayer();
+            _signalBus.TryUnsubscribe<GameOverStartedSignal>(ShowGameOverWindow);
             KillTweens();
-        }
-
-        private void OnPlayerRegistered(GameObject playerGameObject)
-        {
-            var networkObject = playerGameObject.GetComponent<NetworkObject>();
-            if (networkObject != null && networkObject.HasInputAuthority)
-            {
-                UnbindPlayer();
-                _trackedPlayerHealth = playerGameObject.GetComponent<PlayerHealth>();
-                if (_trackedPlayerHealth != null)
-                {
-                    _trackedPlayerHealth.OnDeath += ShowGameOverWindow;
-                }
-            }
-        }
-
-        private void OnPlayerUnregistered(GameObject playerGameObject)
-        {
-            if (playerGameObject == _trackedPlayerHealth?.gameObject)
-            {
-                UnbindPlayer();
-            }
-        }
-
-        private void UnbindPlayer()
-        {
-            if (_trackedPlayerHealth != null)
-            {
-                _trackedPlayerHealth.OnDeath -= ShowGameOverWindow;
-            }
-            _trackedPlayerHealth = null;
         }
 
         private void ShowGameOverWindow()
@@ -94,10 +59,7 @@ namespace _Project.Scripts.Presentation.UI
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
 
-            gameObject.SetActive(true);
             KillTweens();
-
-            _signalBus.Fire<GameOverStartedSignal>();
 
             if (buttonsGroup != null) buttonsGroup.localScale = Vector3.zero;
 

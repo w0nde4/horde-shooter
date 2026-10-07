@@ -11,18 +11,22 @@
 
         public override void Update()
         {
-            if (Brain.Target == null)
+            var nearest = Brain.FindNearestPlayer();
+
+            if (nearest == null)
             {
+                Brain.SetTarget(null);
                 Brain.ChangeState(Brain.IdleEnemyState);
                 return;
             }
+            
+            if (nearest != Brain.Target)
+                Brain.SetTarget(nearest);
 
             Brain.SetDestination(Brain.Target.position);
 
             if (Brain.DistanceToTarget <= Brain.AttackRange)
-            {
                 Brain.ChangeState(Brain.AttackEnemyState);
-            }
         }
 
         public override void Exit()

@@ -13,6 +13,10 @@ namespace _Project.Scripts.Gameplay.Enemy
         [SerializeField] private LayerMask playerLayer;
         [SerializeField] private float detectionRadius = 100f;
         [SerializeField] private float searchIntervalSeconds = 0.2f;
+
+        [Header("Targeting")] 
+        [Range(0.5f, 1f)] 
+        [SerializeField] private float targetSwitchThreshold = 0.2f;
         
         [Networked] private float NetworkSpeed { get; set; }
         [Networked] private TickTimer SearchCooldownTimer { get; set; }
@@ -28,7 +32,9 @@ namespace _Project.Scripts.Gameplay.Enemy
         public AttackEnemyState AttackEnemyState { get; private set; }
         public Transform Target { get; private set; }
 
-        public float DistanceToTarget => Target == null ? Mathf.Infinity : Vector3.Distance(transform.position, Target.position);
+        public float DistanceToTarget => Target == null 
+            ? Mathf.Infinity 
+            : Vector3.Distance(transform.position, Target.position);
         public EnemyCombat Combat => combat;
         public float AttackRange => combat != null ? combat.AttackRange : 0f;
         public float AttackCooldown => combat != null ? combat.AttackCooldown : 0f;
@@ -108,7 +114,12 @@ namespace _Project.Scripts.Gameplay.Enemy
             _currentState?.Enter();
         }
 
-        public void SetTarget(Transform target) => Target = target;
+        public void SetTarget(Transform target)
+        {
+            Target = target;
+            _nearestPlayer = target;
+            SearchCooldownTimer = TickTimer.None;
+        }
 
         public void StopAgent()
         {
@@ -147,7 +158,9 @@ namespace _Project.Scripts.Gameplay.Enemy
             SearchCooldownTimer = TickTimer.CreateFromSeconds(Runner, searchIntervalSeconds);
             Array.Clear(RunTimeBuffer, 0, RunTimeBuffer.Length);
 
-            var hitCount = Physics.OverlapSphereNonAlloc(transform.position, detectionRadius, RunTimeBuffer, playerLayer);
+            var hitCount = Physics.OverlapSphereNonAlloc(
+                transform.position, detectionRadius, RunTimeBuffer, playerLayer);
+            
             if (hitCount == 0)
             {
                 _nearestPlayer = null;
@@ -155,7 +168,7 @@ namespace _Project.Scripts.Gameplay.Enemy
             }
 
             Transform nearest = null;
-            var minDistance = Mathf.Infinity;
+            var minSqrDistance = Mathf.Infinity;
             var currentPosition = transform.position;
             
             for (var i = 0; i < hitCount; i++)
@@ -166,10 +179,26 @@ namespace _Project.Scripts.Gameplay.Enemy
                 var direction = hit.transform.position - currentPosition;
                 var sqrDist = direction.sqrMagnitude;
 
-                if (sqrDist < minDistance)
+                if (sqrDist < minSqrDistance)
                 {
-                    minDistance = sqrDist;
+                    minSqrDistance = sqrDist;
                     nearest = hit.transform;
+                }
+            }
+
+            if (_nearestPlayer != null && nearest != null && nearest != _nearestPlayer)
+            {
+                var currentDir = _nearestPlayer.position - currentPosition;
+                var currentSqr = currentDir.sqrMagnitude;
+                var maxSqr = detectionRadius * detectionRadius;
+
+                if (currentSqr <= maxSqr)
+                {
+                    var thresholdSqr = currentSqr * targetSwitchThreshold * targetSwitchThreshold;
+                    if (minSqrDistance >= thresholdSqr)
+                    {
+                        nearest = _nearestPlayer;
+                    }
                 }
             }
             

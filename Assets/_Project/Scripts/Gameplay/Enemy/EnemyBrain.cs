@@ -70,9 +70,11 @@ namespace _Project.Scripts.Gameplay.Enemy
                 return;
             }
 
-            if (Object.HasStateAuthority && _agent != null && NetworkSpeed > 0)
+            if (Object.HasStateAuthority && _agent != null)
             {
-                _agent.speed = NetworkSpeed;
+                _agent.Warp(transform.position);
+
+                if (NetworkSpeed > 0) _agent.speed = NetworkSpeed;
             }
             
             ChangeState(IdleEnemyState); 

@@ -6,12 +6,17 @@ using _Project.Scripts.Gameplay.Enemy;
 using _Project.Scripts.Services;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.AI;
 using Zenject;
 
 namespace _Project.Scripts.Gameplay.Waves
 {
     public class WaveSpawner : MonoBehaviour, IWaveSpawner
     {
+        [Header("Spawn Fallback")] 
+        [SerializeField] private float navMeshSampleRadius = 100f;
+        [SerializeField] private Transform fallbackSpawnAnchor;
+        
         [Inject] private WaveSpawnerConfig _config;
         [Inject] private PlayerRegistry _playerRegistry;
         [Inject] private IEnemySpawnService _enemySpawnService;
@@ -59,7 +64,7 @@ namespace _Project.Scripts.Gameplay.Waves
                 }
                 else
                 {
-                    Debug.LogWarning("WaveSpawner: Spawn failed, retrying in 0.5 seconds..."); //todo: enemy climbs any height, spawns independently from player
+                    Debug.LogWarning("WaveSpawner: Spawn failed, retrying in 0.5 seconds...");
                     await UniTask.Delay(TimeSpan.FromSeconds(0.5f), cancellationToken: this.GetCancellationTokenOnDestroy());
                 }
             }
@@ -74,7 +79,7 @@ namespace _Project.Scripts.Gameplay.Waves
             var ctx = new EnemySpawnContext
             {
                 PrefabAddress = _config.enemyPrefabAddress,
-                Center = GetNearestPlayerPosition(),
+                Center = GetSpawnCenter(),
                 PlayersTransforms = GetPlayersTransforms(),
                 MinSpawnRadius = _config.minSpawnRadius,
                 MaxSpawnRadius = _config.maxSpawnRadius,
@@ -118,14 +123,14 @@ namespace _Project.Scripts.Gameplay.Waves
             }
             return valid.ToArray();
         }
-        
-        private Vector3 GetNearestPlayerPosition()
+
+        private Vector3 GetSpawnCenter()
         {
             var players = GetPlayersTransforms();
-            if (players.Length == 0) 
-                return transform.position; // fallback
+            if (players.Length == 0)
+                return GetFallbackPosition();
 
-            var nearestPos = players[0].position;
+            var nearestPlayerPos = players[0].position;
             var minDist = float.MaxValue;
             foreach (var p in players)
             {
@@ -134,10 +139,61 @@ namespace _Project.Scripts.Gameplay.Waves
                 if (d < minDist)
                 {
                     minDist = d;
-                    nearestPos = p.position;
+                    nearestPlayerPos = p.position;
                 }
             }
-            return nearestPos;
+
+            if (NavMesh.SamplePosition(nearestPlayerPos, out var hit, navMeshSampleRadius, NavMesh.AllAreas))
+                return hit.position;
+
+            if (TryFindNavMeshAround(players, out var aroundHit))
+                return aroundHit;
+
+            Debug.LogWarning("WaveSpawner: NavMesh не найден рядом с игроками, использую fallback.");
+            return GetFallbackPosition();
+        }
+        
+        private bool TryFindNavMeshAround(Transform[] players, out Vector3 result)
+        {
+            const int Rings = 8;
+            const float StepRadius = 5f;
+            const int PointsPerRing = 8;
+
+            foreach (var player in players)
+            {
+                if (player == null) continue;
+
+                for (var ring = 1; ring <= Rings; ring++)
+                {
+                    var radius = StepRadius * ring;
+                    for (var i = 0; i < PointsPerRing; i++)
+                    {
+                        var angle = i * Mathf.PI * 2f / PointsPerRing;
+                        var probe = player.position
+                                    + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
+
+                        if (NavMesh.SamplePosition(probe, out var hit, navMeshSampleRadius, NavMesh.AllAreas))
+                        {
+                            result = hit.position;
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            result = default;
+            return false;
+        }
+
+        private Vector3 GetFallbackPosition()
+        {
+            if (fallbackSpawnAnchor != null)
+                return fallbackSpawnAnchor.position;
+
+            if (NavMesh.SamplePosition(transform.position, out var hit, navMeshSampleRadius, NavMesh.AllAreas))
+                return hit.position;
+
+            return transform.position;
         }
 
         private void OnEnemyDeath(EnemyHealth enemy)

@@ -1,15 +1,20 @@
-﻿using _Project.Scripts.Core.Interfaces;
+﻿using System;
+using _Project.Scripts.Core.Interfaces;
 using _Project.Scripts.Domain.Gameplay.Data;
 using _Project.Scripts.Domain.Gameplay.Interfaces;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AI;
 using Zenject;
+using Random = UnityEngine.Random;
 
 namespace _Project.Scripts.Services
 {
     public class EnemySpawnService : IEnemySpawnService
     {
+        private const float SampleMaxDistance = 20f;
+        private const int RandomAttempts = 30;
+        
         private readonly ISpawnService _spawnService;
         
         [Inject]
@@ -27,11 +32,10 @@ namespace _Project.Scripts.Services
                 return null;
             }
             
-            // === 2. Get a random spawn position around the player ===
-            var spawnPos = GetRandomSpawnPosition(ctx.Center, ctx.MinSpawnRadius, ctx.MaxSpawnRadius);
-            if (spawnPos == Vector3.zero)
+            // === 2. Get a valid NavMesh position for spawning ===
+            if (!TryGetSpawnPosition(ctx, out var spawnPos))
             {
-                Debug.LogWarning("Failed to find spawn position");
+                Debug.LogWarning("EnemySpawnService: Failed to find NavMesh position for spawn.");
                 return null;
             }
 
@@ -42,6 +46,7 @@ namespace _Project.Scripts.Services
                 Quaternion.identity,
                 onBeforeSpawn: ctx.OnSetupObject
                 );
+            
             if (enemyObj == null)
             {
                 Debug.LogError($"Failed to instantiate enemy from address {ctx.PrefabAddress}");
@@ -59,18 +64,44 @@ namespace _Project.Scripts.Services
             return false;    
         }
         
-        private Vector3 GetRandomSpawnPosition(Vector3 center, float minSpawnRadius, float maxSpawnRadius)
+        private bool TryGetSpawnPosition(EnemySpawnContext ctx, out Vector3 result)
         {
-            for (var i = 0; i < 30; i++)
+            // === 3 levels of Fault-Tolerance ===
+            // --- Level 1: random ring ---
+            for (var i = 0; i < RandomAttempts; i++)
             {
-                var direction = Random.insideUnitCircle.normalized;
-                var distance = Random.Range(minSpawnRadius, maxSpawnRadius);
-                var candidate = center + new Vector3(direction.x, 0, direction.y) * distance;
+                var angle = Random.value * (float)Math.PI * 2f;
+                var direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+                var distance = Random.Range(ctx.MinSpawnRadius, ctx.MaxSpawnRadius);
+                var candidate = ctx.Center + new Vector3(direction.x, 0f, direction.y) * distance;
 
-                if (NavMesh.SamplePosition(candidate, out var hit, 2f, NavMesh.AllAreas))
-                    return hit.position;
+                if (NavMesh.SamplePosition(candidate, out var hit, SampleMaxDistance, NavMesh.AllAreas))
+                {
+                    result = hit.position;
+                    Debug.Log($"[Spawn] L1 candidate={candidate} -> hit={hit.position} | center={ctx.Center} min={ctx.MinSpawnRadius} max={ctx.MaxSpawnRadius}");
+                    return true;
+                }
             }
-            return Vector3.zero;
+
+            // --- Level 2: Centre ---
+            if (NavMesh.SamplePosition(ctx.Center, out var centerHit, SampleMaxDistance, NavMesh.AllAreas))
+            {
+                result = centerHit.position;
+                Debug.Log($"[Spawn] L2 (fallback to center) -> {centerHit.position} | center={ctx.Center}");
+                return true;
+            }
+
+            // --- Level 3: wide search around the centre ---
+            var wideRadius = Mathf.Max(ctx.MaxSpawnRadius, SampleMaxDistance) * 4f;
+            if (NavMesh.SamplePosition(ctx.Center, out var wideHit, wideRadius, NavMesh.AllAreas))
+            {
+                result = wideHit.position;
+                Debug.Log($"[Spawn] L3 (wide) -> {wideHit.position} | center={ctx.Center}");
+                return true;
+            }
+
+            result = default;
+            return false;
         }
     }
 }

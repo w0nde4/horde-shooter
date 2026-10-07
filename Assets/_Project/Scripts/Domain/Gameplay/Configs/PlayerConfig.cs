@@ -8,9 +8,6 @@ namespace _Project.Scripts.Domain.Gameplay.Configs
         [Header("Movement")]
         public float defaultMoveSpeed = 5f;
         public float sprintMultiplier = 2f;
-        public float jumpHeight = 1.5f;
-        [Range(-15, 0)] 
-        public float gravity = -9.81f;
 
         [Header("Look")]
         public float mouseSensitivity = 100f;

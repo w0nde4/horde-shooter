@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace _Project.Scripts.Domain.Gameplay
+namespace _Project.Scripts.Core.Data
 {
     public sealed class RespawnCamera
     {

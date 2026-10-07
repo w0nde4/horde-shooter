@@ -1,6 +1,8 @@
-﻿using _Project.Scripts.Core.Interfaces;
+﻿using _Project.Scripts.Core.Data;
+using _Project.Scripts.Core.Interfaces;
 using _Project.Scripts.Domain.Gameplay;
 using _Project.Scripts.Domain.Gameplay.Configs;
+using _Project.Scripts.Domain.Gameplay.Data;
 using _Project.Scripts.Domain.Gameplay.Interfaces;
 using _Project.Scripts.Gameplay.Player;
 using _Project.Scripts.Gameplay.Upgrades;
@@ -24,6 +26,7 @@ namespace _Project.Scripts.Installers
         [SerializeField] private WeaponAudioConfig weaponAudioConfig;
         [SerializeField] private WeaponVFXConfig weaponVFXConfig;
         [SerializeField] private Camera respawnCamera;
+        [SerializeField] private PlayerSpawnPoint playerSpawnPoint;
 
         public override void InstallBindings()
         {
@@ -58,11 +61,20 @@ namespace _Project.Scripts.Installers
                 Debug.LogError("GameInstaller: Respawn Camera is not assigned!");
                 return;
             }
-
             SetupRespawnCamera();
             Container.Bind<RespawnCamera>()
                 .FromInstance(new RespawnCamera(respawnCamera))
                 .AsSingle();
+            
+            if (playerSpawnPoint == null)
+            {
+                Debug.LogError("GameInstaller: PlayerSpawnPoint is not assigned!");
+                return;
+            }
+            Container.Bind<PlayerSpawnPoint>()
+                .FromInstance(playerSpawnPoint)
+                .AsSingle()
+                .NonLazy();
             
             // === Player-scoped services ===
             Container.Bind<PlayerRegistry>()

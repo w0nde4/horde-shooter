@@ -7,7 +7,7 @@ using Zenject;
 
 namespace _Project.Scripts.Gameplay.Enemy
 {
-    public class EnemyHealth : NetworkBehaviour, IDamageable
+    public class EnemyHealth : NetworkBehaviour, IDamageable, IEnemyHealth
     {
         [SerializeField] private float maxHealth = 100f;
         [SerializeField] private float despawnDelay = 3f; //todo: move to config
@@ -28,9 +28,17 @@ namespace _Project.Scripts.Gameplay.Enemy
         private EnemyBrain _brain;
         private UnityEngine.AI.NavMeshAgent _agent;
         private float _lastRenderHealth;
+        
+        public float Current => CurrentHealth;
+        public float Max => maxHealth;
+        public Transform Transform
+        {
+            get => transform;
+            set => Transform = value;
+        }
 
-        public event Action<EnemyHealth> OnDeath;
         public event Action<float, float> OnHealthChanged;
+        public event Action<IEnemyHealth> OnDeath;
     
         private void Awake()
         {
@@ -48,6 +56,14 @@ namespace _Project.Scripts.Gameplay.Enemy
                 IsDead = false;
                 DespawnTimer = TickTimer.None;
             }
+            
+            _signalBus.Fire(new EnemySpawnedSignal(this));
+        }
+
+        public override void Despawned(NetworkRunner runner, bool hasState)
+        {
+            _signalBus.Fire(new EnemyDespawnedSignal(this));
+            base.Despawned(runner, hasState);
         }
 
         public void TakeDamage(float damage)

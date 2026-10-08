@@ -1,4 +1,5 @@
 ﻿using System;
+using _Project.Scripts.Core.Interfaces;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Domain.Gameplay.Data;
 using _Project.Scripts.Domain.Gameplay.Interfaces;
@@ -196,7 +197,7 @@ namespace _Project.Scripts.Gameplay.Waves
             return transform.position;
         }
 
-        private void OnEnemyDeath(EnemyHealth enemy)
+        private void OnEnemyDeath(IEnemyHealth enemy)
         {
             _aliveEnemies--;
             enemy.OnDeath -= OnEnemyDeath;

@@ -47,6 +47,8 @@ namespace _Project.Scripts.Installers
             Container.DeclareSignal<GameOverStartedSignal>().OptionalSubscriber();
             Container.DeclareSignal<PlayerRespawnStartedSignal>().OptionalSubscriber();
             Container.DeclareSignal<PlayerRespawnEndedSignal>().OptionalSubscriber();
+            Container.DeclareSignal<EnemySpawnedSignal>().OptionalSubscriber();
+            Container.DeclareSignal<EnemyDespawnedSignal>().OptionalSubscriber();
         }
     }
 }

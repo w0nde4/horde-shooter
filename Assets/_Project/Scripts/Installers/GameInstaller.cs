@@ -1,11 +1,8 @@
 ﻿using _Project.Scripts.Core.Data;
 using _Project.Scripts.Core.Interfaces;
-using _Project.Scripts.Domain.Gameplay;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Domain.Gameplay.Data;
 using _Project.Scripts.Domain.Gameplay.Interfaces;
-using _Project.Scripts.Gameplay.Player;
-using _Project.Scripts.Gameplay.Upgrades;
 using _Project.Scripts.Gameplay.Waves;
 using _Project.Scripts.Presentation.Audio;
 using _Project.Scripts.Presentation.Configs;
@@ -25,6 +22,8 @@ namespace _Project.Scripts.Installers
         [SerializeField] private PlayerConfig playerConfig;
         [SerializeField] private WeaponAudioConfig weaponAudioConfig;
         [SerializeField] private WeaponVFXConfig weaponVFXConfig;
+        [SerializeField] private GrenadeAudioConfig grenadeAudioConfig;
+        [SerializeField] private GrenadeVFXConfig grenadeVFXConfig;
         [SerializeField] private Camera respawnCamera;
         [SerializeField] private PlayerSpawnPoint playerSpawnPoint;
 
@@ -35,7 +34,9 @@ namespace _Project.Scripts.Installers
                 || waveSpawnerConfig == null
                 || playerConfig == null
                 || weaponAudioConfig == null
-                || weaponVFXConfig == null)
+                || weaponVFXConfig == null
+                || grenadeAudioConfig == null
+                || grenadeVFXConfig == null)
             {
                 Debug.LogError("GameInstaller: Configs is not assigned!");
                 return;
@@ -54,6 +55,12 @@ namespace _Project.Scripts.Installers
                 .AsSingle();
             Container.Bind<WeaponVFXConfig>()
                 .FromInstance(weaponVFXConfig)
+                .AsSingle();
+            Container.Bind<GrenadeAudioConfig>()
+                .FromInstance(grenadeAudioConfig)
+                .AsSingle();
+            Container.Bind<GrenadeVFXConfig>()
+                .FromInstance(grenadeVFXConfig)
                 .AsSingle();
 
             if (respawnCamera == null)
@@ -92,6 +99,10 @@ namespace _Project.Scripts.Installers
             Container.BindInterfacesAndSelfTo<WeaponTracerVFXVisualizer>()
                 .AsSingle();
             Container.BindInterfacesAndSelfTo<WeaponImpactVFXVisualizer>()
+                .AsSingle();
+            Container.BindInterfacesAndSelfTo<GrenadeExplosionAudioVisualizer>()
+                .AsSingle();
+            Container.BindInterfacesAndSelfTo<GrenadeExplosionVFXVisualizer>()
                 .AsSingle();
 
             // === Interfaces ===

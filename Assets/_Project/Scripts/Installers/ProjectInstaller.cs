@@ -36,19 +36,20 @@ namespace _Project.Scripts.Installers
         
             // === Signals ===
             SignalBusInstaller.Install(Container);
-            Container.DeclareSignal<PlayerSpawnedSignal>().OptionalSubscriber();
-            Container.DeclareSignal<PlayerJoinRequestSignal>().OptionalSubscriber();
-            Container.DeclareSignal<PlayerLeaveRequestSignal>().OptionalSubscriber();
-            Container.DeclareSignal<ShotFiredSignal>().OptionalSubscriber();
-            Container.DeclareSignal<DamageAppliedSignal>().OptionalSubscriber();
-            Container.DeclareSignal<ReloadStateChangedSignal>().OptionalSubscriber();
-            Container.DeclareSignal<UpgradeSelectionStartedSignal>().OptionalSubscriber();
-            Container.DeclareSignal<UpgradeSelectionEndedSignal>().OptionalSubscriber();
-            Container.DeclareSignal<GameOverStartedSignal>().OptionalSubscriber();
-            Container.DeclareSignal<PlayerRespawnStartedSignal>().OptionalSubscriber();
-            Container.DeclareSignal<PlayerRespawnEndedSignal>().OptionalSubscriber();
-            Container.DeclareSignal<EnemySpawnedSignal>().OptionalSubscriber();
-            Container.DeclareSignal<EnemyDespawnedSignal>().OptionalSubscriber();
+            Container.DeclareSignal<PlayerSpawnedSignal>();
+            Container.DeclareSignal<PlayerJoinRequestSignal>();
+            Container.DeclareSignal<PlayerLeaveRequestSignal>();
+            Container.DeclareSignal<ShotFiredSignal>();
+            Container.DeclareSignal<DamageAppliedSignal>();
+            Container.DeclareSignal<ReloadStateChangedSignal>();
+            Container.DeclareSignal<UpgradeSelectionStartedSignal>();
+            Container.DeclareSignal<UpgradeSelectionEndedSignal>();
+            Container.DeclareSignal<GameOverStartedSignal>();
+            Container.DeclareSignal<PlayerRespawnStartedSignal>();
+            Container.DeclareSignal<PlayerRespawnEndedSignal>();
+            Container.DeclareSignal<EnemySpawnedSignal>();
+            Container.DeclareSignal<EnemyDespawnedSignal>();
+            Container.DeclareSignal<GrenadeExplodedSignal>();
         }
     }
 }

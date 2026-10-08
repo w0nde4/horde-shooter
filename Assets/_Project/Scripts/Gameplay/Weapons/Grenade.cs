@@ -1,5 +1,6 @@
 ﻿using System;
 using _Project.Scripts.Core.Interfaces;
+using _Project.Scripts.Core.Signals;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using Cysharp.Threading.Tasks;
 using Fusion;
@@ -11,6 +12,9 @@ namespace _Project.Scripts.Gameplay.Weapons
     public class Grenade : NetworkBehaviour
     {
         [Inject] private IDamageService _damageService;
+        [Inject] private SignalBus _signalBus;
+        
+        [Networked] private TickTimer _despawnTimer { get; set; }
         
         private GrenadeConfig _config;
         private bool _exploded;
@@ -59,6 +63,12 @@ namespace _Project.Scripts.Gameplay.Weapons
                 _explosionTimer = TickTimer.None;
                 Explode();
             }
+            
+            if (HasStateAuthority && _exploded && _despawnTimer.Expired(Runner))
+            {
+                _despawnTimer = TickTimer.None;
+                Runner.Despawn(Object);
+            }
         }
 
         private void Explode()
@@ -69,7 +79,6 @@ namespace _Project.Scripts.Gameplay.Weapons
             if (_config == null)
             {
                 Debug.LogError("Grenade: Config missing on Explode!");
-                HandleDestruction();
                 return;
             }
 
@@ -85,24 +94,28 @@ namespace _Project.Scripts.Gameplay.Weapons
                 _damageService?.ApplyDamage(_config.explosionDamage, damageable, hitPoint, hitNormal, gameObject);
             }
 
-            Debug.Log(Runner != null && Runner.IsRunning ? "Server Boom!" : "Offline Boom!");
-
-            HandleDestruction();
-        }
-        
-        private void HandleDestruction()
-        {
             if (Runner != null && Runner.IsRunning)
+                Rpc_OnExploded(transform.position);
+            else
+                _signalBus?.Fire(new GrenadeExplodedSignal(transform.position));
+
+            if (Runner != null && Runner.IsRunning && HasStateAuthority)
             {
-                if (HasStateAuthority)
-                {
-                    Runner.Despawn(Object);
-                }
+                _despawnTimer = TickTimer.CreateFromSeconds(Runner, 0.2f);
             }
             else
             {
                 Destroy(gameObject);
             }
+            
+            Debug.Log(Runner != null && Runner.IsRunning ? "Server Boom!" : "Offline Boom!");
+        }
+        
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void Rpc_OnExploded(Vector3 position)
+        {
+            Debug.Log("Rpc_OnExploded invoked");
+            _signalBus?.Fire(new GrenadeExplodedSignal(position));
         }
     }
 }

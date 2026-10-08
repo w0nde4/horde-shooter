@@ -16,7 +16,23 @@ namespace _Project.Scripts.Services
             GameObject source = null)
         {
             if (target == null) return;
+            if (amount <= 0f) return;
+            
+            if(IsPlayer(target) && IsPlayer(source)) return;
+            
             target.TakeDamage(amount);
         }
+
+        private static bool IsPlayer(object obj)
+        {
+            return obj switch
+            {
+                Component c => c.GetComponentInParent<IPlayerHealth>() != null,
+                GameObject go => go.GetComponentInParent<IPlayerHealth>() != null,
+                _ => false
+            };
+        }
+
+        //todo: fix: проверить, что урон всегда проходит на клиенте
     }
 }

@@ -43,14 +43,17 @@ namespace _Project.Scripts.Presentation.UI
             _parentRect = _rect.parent as RectTransform;
 
             _trackedEnemy.OnHealthChanged += UpdateHealthVisuals;
-
             gameObject.SetActive(true);
 
-            if (healthFillImage != null) healthFillImage.fillAmount = 1f;
             transform.localScale = Vector3.one;
             if (canvasGroup != null) canvasGroup.alpha = 1f;
-
+            
             _lastProcessedHealth = -1f;
+            
+            if (healthFillImage != null) 
+                healthFillImage.fillAmount = enemy.Max > 0f ? enemy.Current / enemy.Max : 1f;
+            
+            UpdateHealthVisuals(enemy.Current, enemy.Max);
         }
 
         public void Unbind()
@@ -65,6 +68,8 @@ namespace _Project.Scripts.Presentation.UI
 
             KillAllTweens();
         }
+        
+        public void SetCamera(Camera camera) => _camera = camera;
 
         public void SetWorldPosition(Vector3 worldAnchor)
         {

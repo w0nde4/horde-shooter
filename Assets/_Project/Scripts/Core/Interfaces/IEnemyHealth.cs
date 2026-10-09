@@ -10,6 +10,6 @@ namespace _Project.Scripts.Core.Interfaces
         
         float Current { get; }
         float Max { get; }
-        Transform Transform { get; set; }
+        Transform Transform { get; }
     }
 }

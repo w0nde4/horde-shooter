@@ -16,7 +16,7 @@ namespace _Project.Scripts.Presentation.UI
 
         [Header("Placement")]
         [SerializeField] private Vector3 worldOffset = new Vector3(0f, 2f, 0f);
-        [SerializeField] private Camera worldCamera;    // опционально: задать вручную
+        [SerializeField] private Camera worldCamera;
 
         [Inject] private SignalBus _signalBus;
         [Inject] private PlayerRegistry _playerRegistry;
@@ -59,10 +59,14 @@ namespace _Project.Scripts.Presentation.UI
 
         private void LateUpdate()
         {
-            // камера могла появиться позже менеджера — пробуем снова
             if (worldCamera == null)
             {
                 TryResolveCameraFromPlayers();
+                if (worldCamera != null)
+                {
+                    foreach (var bar in _active.Values)
+                        bar.SetCamera(worldCamera);
+                }
                 if (worldCamera == null) return;
             }
 
@@ -78,17 +82,20 @@ namespace _Project.Scripts.Presentation.UI
             }
         }
 
-        // ---- Камера локального игрока ----
-
         private void OnPlayerRegistered(GameObject player)
         {
             if (worldCamera != null) return;
             TryResolveCameraFromPlayers();
+
+            if (worldCamera != null)
+            {
+                foreach (var bar in _active.Values)
+                    bar.SetCamera(worldCamera);
+            }
         }
 
         private void OnPlayerUnregistered(GameObject player)
         {
-            // если ушёл именно наш локальный игрок — сбросим камеру
             if (worldCamera == null) return;
             if (worldCamera.transform.IsChildOf(player.transform) || worldCamera.gameObject == player)
                 worldCamera = null;
@@ -115,8 +122,6 @@ namespace _Project.Scripts.Presentation.UI
             }
         }
 
-        // ---- Обработка сигналов ----
-
         private void OnEnemySpawned(EnemySpawnedSignal signal)
         {
             var enemy = signal.Enemy;
@@ -125,7 +130,7 @@ namespace _Project.Scripts.Presentation.UI
             if (worldCamera == null) TryResolveCameraFromPlayers();
 
             var bar = GetFromPool();
-            bar.Bind(enemy, worldCamera);           // допускаем null — бар просто не будет обновлять позицию пока камера не найдена
+            bar.Bind(enemy, worldCamera);
 
             if (worldCamera != null)
                 bar.SetWorldPosition(enemy.Transform.position + worldOffset);

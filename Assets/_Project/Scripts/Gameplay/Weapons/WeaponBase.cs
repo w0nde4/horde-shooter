@@ -137,6 +137,14 @@ namespace _Project.Scripts.Gameplay.Weapons
                 config.hitLayers
                 );
             
+            Debug.Log($"[SHOT] hit={shot.Hit} " +
+                      $"col={shot.HitCollider?.name} " +
+                      $"layer={(shot.HitCollider != null ? LayerMask.LayerToName(shot.HitCollider.gameObject.layer) : "-")} " +
+                      $"dmg={(shot.Hit && shot.HitCollider != null ? (shot.HitCollider.GetComponent<IDamageable>() != null).ToString() : "-")} " +
+                      $"svc={_damageService != null} " +
+                      $"stats={_playerStats != null} " +
+                      $"owner={Runner?.LocalPlayer} auth={HasStateAuthority} input={HasInputAuthority}");
+            
             if(shot.Hit && shot.HitCollider != null)
             {
                 var damageable = shot.HitCollider.GetComponent<IDamageable>();

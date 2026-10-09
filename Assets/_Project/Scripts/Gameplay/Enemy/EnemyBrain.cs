@@ -84,11 +84,7 @@ namespace _Project.Scripts.Gameplay.Enemy
         {
             if (_agent != null) _agent.enabled = false;
             if (combat != null) combat.enabled = false;
-            if(TryGetComponent<EnemyHealth>(out var health))
-            {
-                health.enabled = false;
-            }
-
+            
             enabled = false;
         }
         

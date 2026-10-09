@@ -34,7 +34,6 @@ namespace _Project.Scripts.Gameplay.Enemy
         public Transform Transform
         {
             get => transform;
-            set => Transform = value;
         }
 
         public event Action<float, float> OnHealthChanged;
@@ -68,8 +67,26 @@ namespace _Project.Scripts.Gameplay.Enemy
 
         public void TakeDamage(float damage)
         {
-            if (!HasStateAuthority) return;
-            if (IsDead || CurrentHealth <= 0f) return; 
+            if(damage <= 0f) return;
+            if (HasStateAuthority)
+            {
+                ApplyDamageInternal(damage);
+            }
+            else
+            {
+                RPC_RequestDamage(damage);
+            }
+        }
+        
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        private void RPC_RequestDamage(float damage)
+        {
+            ApplyDamageInternal(damage);
+        }
+
+        private void ApplyDamageInternal(float damage)
+        {
+            if (IsDead || CurrentHealth <= 0f) return;
 
             CurrentHealth -= damage;
             Debug.Log($"[Server] Enemy took {damage} damage, remaining: {CurrentHealth}");
@@ -78,7 +95,6 @@ namespace _Project.Scripts.Gameplay.Enemy
             {
                 CurrentHealth = 0f;
                 IsDead = true;
-
                 DespawnTimer = TickTimer.CreateFromSeconds(Runner, despawnDelay);
                 ServerPurge();
             }

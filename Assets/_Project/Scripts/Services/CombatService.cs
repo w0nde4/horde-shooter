@@ -1,7 +1,5 @@
 ﻿using _Project.Scripts.Core.Interfaces;
-using _Project.Scripts.Core.Signals;
 using UnityEngine;
-using Zenject;
 
 namespace _Project.Scripts.Services
 {
@@ -32,7 +30,5 @@ namespace _Project.Scripts.Services
                 _ => false
             };
         }
-
-        //todo: fix: проверить, что урон всегда проходит на клиенте
     }
 }

@@ -67,6 +67,7 @@ namespace _Project.Scripts.Services
         private bool TryGetSpawnPosition(EnemySpawnContext ctx, out Vector3 result)
         {
             // === 3 levels of Fault-Tolerance ===
+            
             // --- Level 1: random ring ---
             for (var i = 0; i < RandomAttempts; i++)
             {

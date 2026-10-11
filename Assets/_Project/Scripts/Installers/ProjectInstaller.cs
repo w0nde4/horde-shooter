@@ -57,6 +57,8 @@ namespace _Project.Scripts.Installers
             Container.DeclareSignal<ExitToMainMenuRequestedSignal>();
             Container.DeclareSignal<ReturnToMainMenuForcedSignal>();
             Container.DeclareSignal<GameplaySettingsChangedSignal>();
+            Container.DeclareSignal<VictoryStartedSignal>();
+            Container.DeclareSignal<AllWavesCompletedSignal>();
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using _Project.Scripts.Core.Signals;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Domain.Gameplay.Interfaces;
 using Cysharp.Threading.Tasks;
@@ -14,6 +15,7 @@ namespace _Project.Scripts.Services
         private readonly WaveCycleConfig _config;
         private readonly IWaveSpawner _waveSpawner;
         private readonly PlayerRegistry _playerRegistry;
+        private readonly SignalBus _signalBus;
         
         private CancellationTokenSource _waveCycleCts;
         private int _currentWaveIndex;
@@ -23,11 +25,12 @@ namespace _Project.Scripts.Services
         public event Action OnWaveComplete;
 
         [Inject]
-        public WaveOrchestrator(WaveCycleConfig config, IWaveSpawner waveSpawner, PlayerRegistry playerRegistry)
+        public WaveOrchestrator(WaveCycleConfig config, IWaveSpawner waveSpawner, PlayerRegistry playerRegistry, SignalBus signalBus)
         {
             _config = config;
             _waveSpawner = waveSpawner;
             _playerRegistry = playerRegistry;
+            _signalBus = signalBus;
             _waveCycleCts = new CancellationTokenSource();
         }
         
@@ -56,8 +59,15 @@ namespace _Project.Scripts.Services
                 _currentWaveIndex++;
                 Debug.Log($"Wave index now: {_currentWaveIndex}");
             }
+            
+            if (ct.IsCancellationRequested)
+            {
+                Debug.Log("Wave cycle cancelled.");
+                return;
+            }
 
             Debug.Log("All waves completed!");
+            _signalBus.Fire<AllWavesCompletedSignal>();
         }
 
         private async UniTask RunWaveDelays(WaveConfig wave, CancellationToken ct)

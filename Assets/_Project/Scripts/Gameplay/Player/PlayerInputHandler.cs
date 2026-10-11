@@ -22,7 +22,13 @@ namespace _Project.Scripts.Gameplay.Player
         private bool _isRespawnBlocked;
         private bool _isGameOverBlocked;
         private bool _isPaused;
-        private bool IsInputBlocked => _isSelectionBlocked || _isRespawnBlocked || _isGameOverBlocked || _isPaused;
+        private bool _isVictoryBlocked;
+        private bool IsInputBlocked => 
+            _isSelectionBlocked 
+            || _isRespawnBlocked 
+            || _isGameOverBlocked 
+            || _isPaused 
+            || _isVictoryBlocked;
 
         private struct PlayerActions
         {
@@ -54,6 +60,7 @@ namespace _Project.Scripts.Gameplay.Player
                 _signalBus.Subscribe<PlayerRespawnStartedSignal>(OnRespawnStarted);
                 _signalBus.Subscribe<PlayerRespawnEndedSignal>(OnRespawnEnded);
                 _signalBus.Subscribe<PauseMenuToggledSignal>(OnPauseMenuToggled);
+                _signalBus.Subscribe<VictoryStartedSignal>(OnVictoryStarted);
             }
         }
 
@@ -69,12 +76,14 @@ namespace _Project.Scripts.Gameplay.Player
                 _signalBus.TryUnsubscribe<PlayerRespawnStartedSignal>(OnRespawnStarted);
                 _signalBus.TryUnsubscribe<PlayerRespawnEndedSignal>(OnRespawnEnded);
                 _signalBus.TryUnsubscribe<PauseMenuToggledSignal>(OnPauseMenuToggled);
+                _signalBus.TryUnsubscribe<VictoryStartedSignal>(OnVictoryStarted);
             }
         }
         
         private void OnSelectionStarted() => _isSelectionBlocked = true;
         private void OnSelectionEnded() => _isSelectionBlocked = false;
         private void OnGameOverStarted() => _isGameOverBlocked = true;
+        private void OnVictoryStarted() => _isVictoryBlocked = true;
         private void OnPauseMenuToggled(PauseMenuToggledSignal signal) => _isPaused = signal.IsOpen;
 
         private void OnRespawnStarted(PlayerRespawnStartedSignal signal)

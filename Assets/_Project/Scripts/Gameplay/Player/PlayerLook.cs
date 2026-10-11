@@ -1,5 +1,4 @@
 ﻿using _Project.Scripts.Core.Data;
-using _Project.Scripts.Domain.Gameplay;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Domain.Gameplay.Data;
 using _Project.Scripts.Domain.Gameplay.Signals;
@@ -30,12 +29,6 @@ namespace _Project.Scripts.Gameplay.Player
         private Camera _playerCamera;
         private AudioListener _playerListener;
         private bool _isRespawning;
-        
-        public PlayerIntent Intent
-        {
-            get => _intent;
-            set => _intent = value;
-        }
 
         public override void Spawned()
         {

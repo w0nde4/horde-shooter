@@ -1,6 +1,5 @@
 ﻿using System;
 using _Project.Scripts.Core.Signals;
-using _Project.Scripts.Domain.Gameplay;
 using _Project.Scripts.Domain.Gameplay.Signals;
 using _Project.Scripts.Services;
 using Cysharp.Threading.Tasks;

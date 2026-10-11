@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using _Project.Scripts.Core.Data;
 using _Project.Scripts.Core.Signals;
 using _Project.Scripts.Domain.Gameplay.Data;
 using _Project.Scripts.Domain.Gameplay.Signals;

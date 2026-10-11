@@ -19,11 +19,8 @@ namespace _Project.Scripts.Gameplay.Waves
         
         private bool _cycleStarted;
 
-        public bool IsAuthoritative =>
-            _networkService == null || !_networkService.IsRunning || _networkService.IsServer;
-        
-        public event Action<WaveConfig> OnWaveStart;
-        public event Action OnWaveComplete;
+        private bool IsAuthoritative =>
+            _networkService is not { IsRunning: true } || _networkService.IsServer;
 
         public void Awake()
         {
@@ -44,8 +41,6 @@ namespace _Project.Scripts.Gameplay.Waves
         
         private void StartCycle()
         {
-            _orchestrator.OnWaveStart += OnWaveStart;
-            _orchestrator.OnWaveComplete += OnWaveComplete;
             _orchestrator.StartWaveCycle(this.GetCancellationTokenOnDestroy()).Forget();
         }
 
@@ -60,8 +55,6 @@ namespace _Project.Scripts.Gameplay.Waves
         {
             if (_waveSpawner != null) _waveSpawner.AllEnemiesDefeated -= OnAllEnemiesDefeated;
             _playerRegistry.OnPlayerRegistered -= OnPlayerRegistered;
-            _orchestrator.OnWaveStart -= OnWaveStart;
-            _orchestrator.OnWaveComplete -= OnWaveComplete;
         }
     }
 }

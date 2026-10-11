@@ -17,19 +17,17 @@ namespace _Project.Scripts.Services.Network
         private readonly PlayerConfig _config;
         private readonly PlayerRegistry _registry;
         private readonly SignalBus _signalBus;
-        private readonly DiContainer _diContainer;
 
         [Inject]
         public NetworkPlayerSpawnService(AddressableService addressableService,
             FusionNetworkService networkService, PlayerConfig playerConfig,
-            PlayerRegistry playerRegistry, SignalBus signalBus, DiContainer diContainer)
+            PlayerRegistry playerRegistry, SignalBus signalBus)
         {
             _addressableService = addressableService;
             _networkService = networkService;
             _config = playerConfig;
             _registry = playerRegistry;
             _signalBus = signalBus;
-            _diContainer = diContainer;
         }
         
         public async UniTask<GameObject> SpawnPlayerAsync(string ownerID, Vector3 position, Quaternion rotation, int? playerRefRaw = null)

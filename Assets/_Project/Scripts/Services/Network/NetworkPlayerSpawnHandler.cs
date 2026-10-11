@@ -3,7 +3,6 @@ using _Project.Scripts.Core.Interfaces;
 using _Project.Scripts.Core.Signals;
 using _Project.Scripts.Domain.Gameplay.Data;
 using Cysharp.Threading.Tasks;
-using UnityEngine;
 using Zenject;
 
 namespace _Project.Scripts.Services.Network

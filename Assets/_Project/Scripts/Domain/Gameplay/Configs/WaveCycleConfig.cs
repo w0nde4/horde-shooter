@@ -8,7 +8,6 @@ namespace _Project.Scripts.Domain.Gameplay.Configs
         [Header("Timings")]
         public float intermissionDuration = 5f;
         public float countdownDuration = 3f;
-        public float completeDuration = 2f;
 
         [Header("Waves")]
         public WaveConfig[] waves;

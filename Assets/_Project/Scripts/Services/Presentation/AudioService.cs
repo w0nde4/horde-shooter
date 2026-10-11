@@ -1,5 +1,4 @@
 ﻿using System;
-using _Project.Scripts.Core.Data;
 using _Project.Scripts.Core.Interfaces;
 using Cysharp.Threading.Tasks;
 using UnityEngine;

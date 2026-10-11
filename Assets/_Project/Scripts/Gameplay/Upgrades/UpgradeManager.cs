@@ -32,8 +32,6 @@ namespace _Project.Scripts.Gameplay.Upgrades
         [Networked, OnChangedRender(nameof(OnUpgradeStateChanged))]
         public NetworkBool IsUpgradeSelected { get; private set; }
         
-        public PlayerStats PlayerStatsInstance => _playerStats;
-
         [Inject]
         private void Construct(PlayerStats playerStats)
         {

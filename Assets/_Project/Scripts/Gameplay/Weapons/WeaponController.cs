@@ -16,9 +16,6 @@ namespace _Project.Scripts.Gameplay.Weapons
         [Networked] private NetworkButtons OldButtons { get; set; }
         
         private WeaponBase _currentWeapon;
-        
-        public int CurrentIndex => CurrentWeaponIndex;
-        public int TotalWeapons => weapons.Length;
 
         public override void Spawned()
         {
@@ -176,9 +173,5 @@ namespace _Project.Scripts.Gameplay.Weapons
             
             UpdateLocalWeaponInstance(CurrentWeaponIndex);
         }
-
-        public Animator GetCurrentWeaponAnimator() => _currentWeapon != null ? _currentWeapon.GetComponent<Animator>() : null;
-        public Transform GetShootOrigin() => shootOrigin;
-        public Transform GetMuzzleOrigin() => _currentWeapon != null ? _currentWeapon.MuzzleTransform : null;
     }
 }

@@ -1,6 +1,4 @@
-﻿using _Project.Scripts.Core.Data;
-using _Project.Scripts.Core.Interfaces;
-using _Project.Scripts.Domain.Gameplay;
+﻿using _Project.Scripts.Domain.Gameplay;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Domain.Gameplay.Data;
 using Fusion;

@@ -11,25 +11,29 @@ namespace _Project.Scripts.Gameplay.Weapons
 {
     public class Grenade : NetworkBehaviour
     {
+        private const float DespawnDelaySeconds = 0.2f;
+        
+        [SerializeField] private int maxHitsBuffer = 256;
+        
         [Inject] private IDamageService _damageService;
         [Inject] private SignalBus _signalBus;
-        
-        [Networked] private TickTimer _despawnTimer { get; set; }
-        
+
         private GrenadeConfig _config;
         private bool _exploded;
+        private Collider[] _hitsBuffer;
         
-        [Networked] private TickTimer _explosionTimer { get; set; } 
-
+        [Networked] private TickTimer DespawnTimer { get; set; }
+        [Networked] private TickTimer ExplosionTimer { get; set; }
+        
         public void Initialize(GrenadeConfig config)
         { 
             _config = config;
             
             if (Runner != null && Runner.IsRunning)
             {
-                if (HasStateAuthority && !_explosionTimer.IsRunning)
+                if (HasStateAuthority && !ExplosionTimer.IsRunning)
                 {
-                    _explosionTimer = TickTimer.CreateFromSeconds(Runner, _config.explosionDelay);
+                    ExplosionTimer = TickTimer.CreateFromSeconds(Runner, _config.explosionDelay);
                 }
             }
             else
@@ -44,6 +48,8 @@ namespace _Project.Scripts.Gameplay.Weapons
                       $"HasStateAuthority={HasStateAuthority} " +
                       $"HasInputAuthority={Object.HasInputAuthority} " +
                       $"Id={Object.Id} PrefabId={Object.NetworkTypeId}");
+            
+            _hitsBuffer = new Collider[maxHitsBuffer];
         }
 
         private async UniTask ExplosionTimerAsync()
@@ -58,15 +64,15 @@ namespace _Project.Scripts.Gameplay.Weapons
 
         public override void FixedUpdateNetwork()
         {
-            if (HasStateAuthority && !_exploded &&  _explosionTimer.Expired(Runner))
+            if (HasStateAuthority && !_exploded &&  ExplosionTimer.Expired(Runner))
             {
-                _explosionTimer = TickTimer.None;
+                ExplosionTimer = TickTimer.None;
                 Explode();
             }
             
-            if (HasStateAuthority && _exploded && _despawnTimer.Expired(Runner))
+            if (HasStateAuthority && _exploded && DespawnTimer.Expired(Runner))
             {
-                _despawnTimer = TickTimer.None;
+                DespawnTimer = TickTimer.None;
                 Runner.Despawn(Object);
             }
         }
@@ -81,41 +87,50 @@ namespace _Project.Scripts.Gameplay.Weapons
                 Debug.LogError("Grenade: Config missing on Explode!");
                 return;
             }
-
-            var hits = Physics.OverlapSphere(transform.position, _config.explosionRadius, _config.damageableLayers);
-            foreach (var hit in hits)
-            {
-                var damageable = hit.GetComponent<IDamageable>();
-                if (damageable == null) continue;
-                
-                var hitPoint = hit.ClosestPoint(transform.position);
-                var hitNormal = (hit.transform.position - transform.position).normalized;
-                if (_damageService == null) Debug.LogError("Grenade: DamageService is null!");
-                _damageService?.ApplyDamage(_config.explosionDamage, damageable, hitPoint, hitNormal, gameObject);
-            }
-
-            if (Runner != null && Runner.IsRunning)
-                Rpc_OnExploded(transform.position);
-            else
-                _signalBus?.Fire(new GrenadeExplodedSignal(transform.position));
-
-            if (Runner != null && Runner.IsRunning && HasStateAuthority)
-            {
-                _despawnTimer = TickTimer.CreateFromSeconds(Runner, 0.2f);
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
             
-            Debug.Log(Runner != null && Runner.IsRunning ? "Server Boom!" : "Offline Boom!");
+            if (_damageService == null)
+                Debug.LogError("Grenade: DamageService is null!");
+            
+            var origin = transform.position;
+            ApplyAreaDamage(origin);
+            
+            var isOnline = Runner != null && Runner.IsRunning;
+            
+            if(isOnline)
+                RPC_OnExploded(origin);
+            else
+                _signalBus.Fire(new GrenadeExplodedSignal(origin));
+            
+            if(isOnline && HasStateAuthority)
+                DespawnTimer = TickTimer.CreateFromSeconds(Runner, DespawnDelaySeconds);
+            else
+                Destroy(gameObject);
         }
         
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-        private void Rpc_OnExploded(Vector3 position)
+        private void RPC_OnExploded(Vector3 position)
         {
             Debug.Log("Rpc_OnExploded invoked");
             _signalBus?.Fire(new GrenadeExplodedSignal(position));
+        }
+        
+        private void ApplyAreaDamage(Vector3 origin)
+        {
+            var hitCount = Physics.OverlapSphereNonAlloc(origin, _config.explosionRadius, _hitsBuffer, _config.damageableLayers);
+
+            for (var i = 0; i < hitCount; i++)
+            {
+                var hit = _hitsBuffer[i];
+                if (hit == null) continue;
+
+                if (!hit.TryGetComponent<IDamageable>(out var damageable)) continue;
+
+                var hitPoint  = hit.ClosestPoint(origin);
+                var hitNormal = (hit.transform.position - origin).normalized;
+
+                _damageService?.ApplyDamage(
+                    _config.explosionDamage, damageable, hitPoint, hitNormal, gameObject);
+            }
         }
     }
 }

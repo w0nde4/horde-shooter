@@ -32,58 +32,76 @@ namespace _Project.Scripts.Services
         
         public async UniTask StartWaveCycle(CancellationToken ct)
         {
+            if (_config == null || _config.waves == null || _config.waves.Length == 0)
+            {
+                Debug.LogWarning("StartWaveCycle: no waves configured.");
+                return;
+            }
+
             _currentWaveIndex = 0;
             while (_currentWaveIndex < _config.waves.Length && !ct.IsCancellationRequested)
             {
                 var wave = _config.waves[_currentWaveIndex];
 
-                Debug.Log($"Wave {wave.waveNumber}: Intermission {_config.intermissionDuration} seconds...");
-                await UniTask.Delay(TimeSpan.FromSeconds(_config.intermissionDuration), cancellationToken: ct);
+                await RunWaveDelays(wave, ct);
+                await RunWave(wave, ct);
+                await RunUpgradePhase(ct);
 
-                Debug.Log($"Wave {wave.waveNumber}: Countdown {_config.countdownDuration} seconds...");
-                await UniTask.Delay(TimeSpan.FromSeconds(_config.countdownDuration), cancellationToken: ct);
-
-                _isWaveActive = true;
-                OnWaveStart?.Invoke(wave);
-                _waveSpawner.StartWave(wave);
-
-                await UniTask.WaitUntil(() => !_isWaveActive, cancellationToken: ct);
-
-                OnWaveComplete?.Invoke();
-                Debug.Log($"Wave {wave.waveNumber} completed!");
-
-                var activeManagers = new List<IUpgradeManager>();
-                foreach (var playerObj in _playerRegistry.Players)
-                {
-                    if (playerObj == null) continue;
-                    var manager = playerObj.GetComponent<IUpgradeManager>();
-                    if (manager != null)
-                    {
-                        activeManagers.Add(manager);
-                    }
-                }
-                
-                Debug.Log($"[Server] Opening upgrades for {activeManagers.Count} players.");
-                foreach (var manager in activeManagers)
-                {
-                    manager.ShowUpgrades();
-                }
-
-                var waitTasks = activeManagers.Select(manager =>
-                    UniTask.WaitUntil(() => manager.IsUpgradeSelected, cancellationToken: ct)
-                );
-                await UniTask.WhenAll(waitTasks);
-                
-                foreach (var manager in activeManagers)
-                {
-                    manager.ResetSelection();
-                }
-                
                 _currentWaveIndex++;
                 Debug.Log($"Wave index now: {_currentWaveIndex}");
             }
 
             Debug.Log("All waves completed!");
+        }
+
+        private async UniTask RunWaveDelays(WaveConfig wave, CancellationToken ct)
+        {
+            Debug.Log($"Wave {wave.waveNumber}: Intermission {_config.intermissionDuration} seconds...");
+            await UniTask.Delay(TimeSpan.FromSeconds(_config.intermissionDuration), cancellationToken: ct);
+
+            Debug.Log($"Wave {wave.waveNumber}: Countdown {_config.countdownDuration} seconds...");
+            await UniTask.Delay(TimeSpan.FromSeconds(_config.countdownDuration), cancellationToken: ct);
+        }
+
+        private async UniTask RunWave(WaveConfig wave, CancellationToken ct)
+        {
+            _isWaveActive = true;
+            OnWaveStart?.Invoke(wave);
+            _waveSpawner.StartWave(wave);
+
+            await UniTask.WaitUntil(() => !_isWaveActive, cancellationToken: ct);
+
+            OnWaveComplete?.Invoke();
+            Debug.Log($"Wave {wave.waveNumber} completed!");
+        }
+
+        private async UniTask RunUpgradePhase(CancellationToken ct)
+        {
+            var activeManagers = new List<IUpgradeManager>();
+            foreach (var playerObj in _playerRegistry.Players)
+            {
+                if (playerObj == null) continue;
+                if (playerObj.TryGetComponent<IUpgradeManager>(out var manager))
+                {
+                    activeManagers.Add(manager);
+                }
+            }
+
+            Debug.Log($"[Server] Opening upgrades for {activeManagers.Count} players.");
+            foreach (var manager in activeManagers)
+            {
+                manager.ShowUpgrades();
+            }
+
+            var waitTasks = activeManagers.Select(manager =>
+                UniTask.WaitUntil(() => manager.IsUpgradeSelected, cancellationToken: ct)
+            );
+            await UniTask.WhenAll(waitTasks);
+
+            foreach (var manager in activeManagers)
+            {
+                manager.ResetSelection();
+            }
         }
         
         public void ResetOrchestrator()

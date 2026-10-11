@@ -11,7 +11,7 @@ namespace _Project.Scripts.Domain.Gameplay.Configs
         public float range = 100f;
 
         [Header("Fire Rate")]
-        [Tooltip("Выстрелов в секунду")]
+        [Tooltip("per sec")]
         public float fireRate = 10f;
 
         [Header("Magazine")]
@@ -19,17 +19,18 @@ namespace _Project.Scripts.Domain.Gameplay.Configs
         public float reloadTime = 1.5f;
 
         [Header("Spread")]
-        [Tooltip("Максимальный угол разброса в градусах (0 = точный выстрел)")]
+        [Tooltip("degrees (0 = precise shot)")]
         public float spreadAngle = 0.5f;
     
-        [Header("Pellets (для дробовика)")]
-        [Tooltip("Количество дробинок за выстрел. Для одиночного оружия = 1")]
+        [Header("Pellets (shotgun only)")]
+        [Tooltip("for single shot weapon = 1")]
         public int pellets = 1;
 
         [Header("Automatic")]
-        public bool isAutomatic = false; // если true, оружие стреляет при удержании кнопки
+        [Tooltip("true = fire by holding")]
+        public bool isAutomatic = false;
         
         [Header("Hit Layer")]
-        public LayerMask hitLayers = ~0; // по умолчанию все слои
+        public LayerMask hitLayers = ~0;
     }
 }

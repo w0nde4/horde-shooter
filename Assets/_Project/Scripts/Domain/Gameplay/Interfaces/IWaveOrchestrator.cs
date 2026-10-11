@@ -9,6 +9,7 @@ namespace _Project.Scripts.Domain.Gameplay.Interfaces
     {
         UniTask StartWaveCycle(CancellationToken ct);
         void OnAllEnemiesDefeated();
+        CancellationToken GetToken();
         event Action<WaveConfig> OnWaveStart;
         event Action OnWaveComplete;
     }

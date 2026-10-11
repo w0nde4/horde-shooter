@@ -13,10 +13,13 @@ namespace _Project.Scripts.Installers
         public override void InstallBindings()
         {
             // === Global Services ===
-            Container.Bind<AddressableService>()
+            Container.BindInterfacesAndSelfTo<AddressableService>()
                 .AsSingle()
                 .NonLazy();
             Container.BindInterfacesAndSelfTo<FusionNetworkService>()
+                .AsSingle()
+                .NonLazy();
+            Container.BindInterfacesAndSelfTo<SettingsService>()
                 .AsSingle()
                 .NonLazy();
 
@@ -53,6 +56,7 @@ namespace _Project.Scripts.Installers
             Container.DeclareSignal<PauseMenuToggledSignal>();
             Container.DeclareSignal<ExitToMainMenuRequestedSignal>();
             Container.DeclareSignal<ReturnToMainMenuForcedSignal>();
+            Container.DeclareSignal<GameplaySettingsChangedSignal>();
         }
     }
 }

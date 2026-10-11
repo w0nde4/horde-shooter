@@ -13,7 +13,6 @@ namespace _Project.Scripts.Domain.Gameplay.Configs
         public float mouseSensitivity = 100f;
         public float minPitch = -80f;
         public float maxPitch = 80f;
-        public bool invertY = false;
         
         [Header("Addressables")]
         public string playerPrefabAddress;

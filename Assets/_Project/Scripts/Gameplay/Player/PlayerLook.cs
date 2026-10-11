@@ -1,7 +1,9 @@
 ﻿using _Project.Scripts.Core.Data;
+using _Project.Scripts.Core.Signals;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Domain.Gameplay.Data;
 using _Project.Scripts.Domain.Gameplay.Signals;
+using _Project.Scripts.Services;
 using Fusion;
 using UnityEngine;
 using Zenject;
@@ -19,6 +21,7 @@ namespace _Project.Scripts.Gameplay.Player
         [Inject] private PlayerConfig _playerConfig;
         [Inject] private SignalBus _signalBus;
         [Inject] private RespawnCamera _respawnCamera;
+        [Inject] private SettingsService _settingsService;
 
         [Networked] private float NetworkedXRotation { get; set; }
         
@@ -29,6 +32,8 @@ namespace _Project.Scripts.Gameplay.Player
         private Camera _playerCamera;
         private AudioListener _playerListener;
         private bool _isRespawning;
+        private bool _invertY;
+        private float _fov;
 
         public override void Spawned()
         {
@@ -41,10 +46,15 @@ namespace _Project.Scripts.Gameplay.Player
                 _playerListener = cameraTransform.GetComponent<AudioListener>();
             }
 
+            _invertY = _settingsService.InvertY;
+            _fov = _settingsService.Fov;
+
             if (HasInputAuthority)
             {
                 _signalBus.Subscribe<PlayerRespawnStartedSignal>(OnRespawnStarted);
                 _signalBus.Subscribe<PlayerRespawnEndedSignal>(OnRespawnEnded);
+                _signalBus.Subscribe<GameplaySettingsChangedSignal>(OnGameplaySettingsChanged);
+                ApplyFOV(_fov);
                 return;
             }
 
@@ -58,8 +68,25 @@ namespace _Project.Scripts.Gameplay.Player
             {
                 _signalBus.TryUnsubscribe<PlayerRespawnStartedSignal>(OnRespawnStarted);
                 _signalBus.TryUnsubscribe<PlayerRespawnEndedSignal>(OnRespawnEnded);
+                _signalBus.TryUnsubscribe<GameplaySettingsChangedSignal>(OnGameplaySettingsChanged);
             }
             base.Despawned(runner, hasState);
+        }
+        
+        private void OnGameplaySettingsChanged(GameplaySettingsChangedSignal signal)
+        {
+            _invertY = signal.InvertY;
+            _fov = signal.Fov;
+
+            ApplyFOV(_fov);
+
+            if (_inputHandler != null)
+                _inputHandler.ClampVerticalBuffer(_playerConfig.minPitch, _playerConfig.maxPitch);
+        }
+        
+        private void ApplyFOV(float fov)
+        {
+            if (_playerCamera != null) _playerCamera.fieldOfView = fov;
         }
         
         private void OnRespawnStarted(PlayerRespawnStartedSignal signal)
@@ -140,14 +167,14 @@ namespace _Project.Scripts.Gameplay.Player
             _yRotation = rawAccumulatedMouse.x * finalSensitivity;
             
             var rawPitch = rawAccumulatedMouse.y * finalSensitivity;
-            _xRotation = rawPitch * (_playerConfig.invertY ? 1f : -1f);
+            _xRotation = rawPitch * (_invertY ? 1f : -1f);
             
             _xRotation = Mathf.Clamp(_xRotation, _playerConfig.minPitch, _playerConfig.maxPitch);
             
             if (_inputHandler != null)
             {
-                var minRaw = _playerConfig.minPitch / (finalSensitivity * (_playerConfig.invertY ? 1f : -1f));
-                var maxRaw = _playerConfig.maxPitch / (finalSensitivity * (_playerConfig.invertY ? 1f : -1f));
+                var minRaw = _playerConfig.minPitch / (finalSensitivity * (_invertY ? 1f : -1f));
+                var maxRaw = _playerConfig.maxPitch / (finalSensitivity * (_invertY ? 1f : -1f));
                 
                 if (minRaw > maxRaw) (minRaw, maxRaw) = (maxRaw, minRaw);
 

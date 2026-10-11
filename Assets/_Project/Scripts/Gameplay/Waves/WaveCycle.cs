@@ -1,5 +1,4 @@
-﻿using System;
-using _Project.Scripts.Domain.Gameplay.Configs;
+﻿using System.Threading;
 using _Project.Scripts.Domain.Gameplay.Interfaces;
 using _Project.Scripts.Services;
 using _Project.Scripts.Services.Network;
@@ -25,6 +24,10 @@ namespace _Project.Scripts.Gameplay.Waves
         public void Awake()
         {
             _playerRegistry.OnPlayerRegistered += OnPlayerRegistered;
+            
+            if (_waveSpawner != null) 
+                _waveSpawner.AllEnemiesDefeated += OnAllEnemiesDefeated;
+            
             if (_playerRegistry.HasPlayer && !_cycleStarted && IsAuthoritative)
             {
                 _cycleStarted = true;
@@ -39,16 +42,16 @@ namespace _Project.Scripts.Gameplay.Waves
             StartCycle();
         }
         
-        private void StartCycle()
+        private async UniTaskVoid StartCycleAsync()
         {
-            _orchestrator.StartWaveCycle(this.GetCancellationTokenOnDestroy()).Forget();
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                this.GetCancellationTokenOnDestroy(), _orchestrator.GetToken());
+            
+            await _orchestrator.StartWaveCycle(linkedCts.Token);
         }
 
-        private void Start()
-        {
-            if (_waveSpawner != null) _waveSpawner.AllEnemiesDefeated += OnAllEnemiesDefeated;
-        }
-
+        private void StartCycle() => StartCycleAsync().Forget();
+        
         private void OnAllEnemiesDefeated() => _orchestrator.OnAllEnemiesDefeated();
 
         private void OnDestroy()

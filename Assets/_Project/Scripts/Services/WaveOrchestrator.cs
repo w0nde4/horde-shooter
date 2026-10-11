@@ -9,7 +9,7 @@ using Zenject;
 
 namespace _Project.Scripts.Services
 {
-    public class WaveOrchestrator : IWaveOrchestrator
+    public class WaveOrchestrator : IWaveOrchestrator, IDisposable
     {
         private readonly WaveCycleConfig _config;
         private readonly IWaveSpawner _waveSpawner;
@@ -28,6 +28,7 @@ namespace _Project.Scripts.Services
             _config = config;
             _waveSpawner = waveSpawner;
             _playerRegistry = playerRegistry;
+            _waveCycleCts = new CancellationTokenSource();
         }
         
         public async UniTask StartWaveCycle(CancellationToken ct)
@@ -37,15 +38,20 @@ namespace _Project.Scripts.Services
                 Debug.LogWarning("StartWaveCycle: no waves configured.");
                 return;
             }
+            
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, _waveCycleCts.Token);
+            var token = linkedCts.Token;
 
             _currentWaveIndex = 0;
             while (_currentWaveIndex < _config.waves.Length && !ct.IsCancellationRequested)
             {
                 var wave = _config.waves[_currentWaveIndex];
 
-                await RunWaveDelays(wave, ct);
-                await RunWave(wave, ct);
-                await RunUpgradePhase(ct);
+                await RunWaveDelays(wave, token);
+                if (token.IsCancellationRequested) break;
+                await RunWave(wave, token);
+                if (token.IsCancellationRequested) break;
+                await RunUpgradePhase(token);
 
                 _currentWaveIndex++;
                 Debug.Log($"Wave index now: {_currentWaveIndex}");
@@ -106,15 +112,19 @@ namespace _Project.Scripts.Services
         
         public void ResetOrchestrator()
         {
-            if (_waveCycleCts != null)
-            {
-                _waveCycleCts.Cancel();
-                _waveCycleCts.Dispose();
-            }
-
+            _waveCycleCts.Cancel();
+            _waveCycleCts.Dispose();
             _waveCycleCts = new CancellationTokenSource();
+            
             _currentWaveIndex = 0;
             _isWaveActive = false;
+        }
+
+        public void Dispose()
+        {
+            _waveCycleCts?.Cancel();
+            _waveCycleCts?.Dispose();
+            _waveCycleCts = null;
         }
 
         public CancellationToken GetToken() => _waveCycleCts?.Token ?? CancellationToken.None;

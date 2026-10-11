@@ -12,7 +12,7 @@ using Zenject;
 
 namespace _Project.Scripts.Gameplay.Waves
 {
-    public class WaveSpawner : MonoBehaviour, IWaveSpawner
+    public class WaveEnemyController : MonoBehaviour, IWaveSpawner
     {
         [Header("Spawn Fallback")] 
         [SerializeField] private float navMeshSampleRadius = 100f;

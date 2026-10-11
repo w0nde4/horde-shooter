@@ -1,6 +1,7 @@
 ﻿using System;
 using _Project.Scripts.Core.Interfaces;
 using _Project.Scripts.Core.Signals;
+using _Project.Scripts.Domain.Gameplay.Configs;
 using Fusion;
 using UnityEngine;
 using Zenject;
@@ -9,9 +10,7 @@ namespace _Project.Scripts.Gameplay.Enemy
 {
     public class EnemyHealth : NetworkBehaviour, IDamageable, IEnemyHealth
     {
-        [SerializeField] private float maxHealth = 100f;
-        [SerializeField] private float despawnDelay = 3f; //todo: move to config
-
+        [Inject] private EnemyConfig _config;
         [Inject] private SignalBus _signalBus;
         
         [Networked]
@@ -30,7 +29,7 @@ namespace _Project.Scripts.Gameplay.Enemy
         private float _lastRenderHealth;
         
         public float Current => CurrentHealth;
-        public float Max => maxHealth;
+        public float Max => _config.maxHealth;
         public Transform Transform
         {
             get => transform;
@@ -51,7 +50,7 @@ namespace _Project.Scripts.Gameplay.Enemy
             
             if (HasStateAuthority)
             {
-                CurrentHealth = maxHealth;
+                CurrentHealth = _config.maxHealth;
                 IsDead = false;
                 DespawnTimer = TickTimer.None;
             }
@@ -95,7 +94,7 @@ namespace _Project.Scripts.Gameplay.Enemy
             {
                 CurrentHealth = 0f;
                 IsDead = true;
-                DespawnTimer = TickTimer.CreateFromSeconds(Runner, despawnDelay);
+                DespawnTimer = TickTimer.CreateFromSeconds(Runner, _config.despawnDelay);
                 ServerPurge();
             }
         }
@@ -120,7 +119,7 @@ namespace _Project.Scripts.Gameplay.Enemy
 
         private void OnHealthNetworkChanged()
         {
-            OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
+            OnHealthChanged?.Invoke(CurrentHealth, _config.maxHealth);
             
             if (CurrentHealth < _lastRenderHealth)
             {

@@ -1,22 +1,16 @@
 ﻿using System;
+using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Gameplay.Enemy.States;
 using Fusion;
 using UnityEngine;
 using UnityEngine.AI;
+using Zenject;
 
 namespace _Project.Scripts.Gameplay.Enemy
 {
     public class EnemyBrain : NetworkBehaviour
     {
-        [Header("References")]
-        [SerializeField] private EnemyCombat combat;
-        [SerializeField] private LayerMask playerLayer;
-        [SerializeField] private float detectionRadius = 100f;
-        [SerializeField] private float searchIntervalSeconds = 0.2f;
-
-        [Header("Targeting")] 
-        [Range(0.5f, 1f)] 
-        [SerializeField] private float targetSwitchThreshold = 0.2f;
+        [Inject] private EnemyConfig _config;
         
         [Networked] private float NetworkSpeed { get; set; }
         [Networked] private TickTimer SearchCooldownTimer { get; set; }
@@ -26,6 +20,7 @@ namespace _Project.Scripts.Gameplay.Enemy
         private NavMeshAgent _agent;
         private EnemyState _currentState;
         private Transform _nearestPlayer;
+        private EnemyCombat _combat;
 
         public IdleEnemyState IdleEnemyState { get; private set; }
         public ChaseEnemyState ChaseEnemyState { get; private set; }
@@ -35,9 +30,9 @@ namespace _Project.Scripts.Gameplay.Enemy
         public float DistanceToTarget => Target == null 
             ? Mathf.Infinity 
             : Vector3.Distance(transform.position, Target.position);
-        public EnemyCombat Combat => combat;
-        public float AttackRange => combat != null ? combat.AttackRange : 0f;
-        public float AttackCooldown => combat != null ? combat.AttackCooldown : 0f;
+        public EnemyCombat Combat => _combat;
+        public float AttackRange => _combat != null ? _combat.AttackRange : 0f;
+        public float AttackCooldown => _combat != null ? _combat.AttackCooldown : 0f;
 
         private void Awake()
         {
@@ -49,12 +44,12 @@ namespace _Project.Scripts.Gameplay.Enemy
                 _agent.updateRotation = false;
             }
 
-            if (combat == null)
-                combat = GetComponent<EnemyCombat>();
+            if (_combat == null)
+                _combat = GetComponent<EnemyCombat>();
 
             if (_agent == null)
                 Debug.LogError("EnemyBrain: NavMeshAgent not found!");
-            if (combat == null)
+            if (_combat == null)
                 Debug.LogError("EnemyBrain: EnemyCombat not found!");
 
             IdleEnemyState = new IdleEnemyState(this);
@@ -83,7 +78,7 @@ namespace _Project.Scripts.Gameplay.Enemy
         private void DisableBrainLocally()
         {
             if (_agent != null) _agent.enabled = false;
-            if (combat != null) combat.enabled = false;
+            if (_combat != null) _combat.enabled = false;
             
             enabled = false;
         }
@@ -146,64 +141,6 @@ namespace _Project.Scripts.Gameplay.Enemy
                 transform.rotation = Quaternion.LookRotation(dir);
         }
 
-        public Transform FindNearestPlayer()
-        {
-            if (SearchCooldownTimer.IsRunning && !SearchCooldownTimer.Expired(Runner))
-            {
-                return _nearestPlayer;
-            }
-
-            SearchCooldownTimer = TickTimer.CreateFromSeconds(Runner, searchIntervalSeconds);
-            Array.Clear(RunTimeBuffer, 0, RunTimeBuffer.Length);
-
-            var hitCount = Physics.OverlapSphereNonAlloc(
-                transform.position, detectionRadius, RunTimeBuffer, playerLayer);
-            
-            if (hitCount == 0)
-            {
-                _nearestPlayer = null;
-                return null;
-            }
-
-            Transform nearest = null;
-            var minSqrDistance = Mathf.Infinity;
-            var currentPosition = transform.position;
-            
-            for (var i = 0; i < hitCount; i++)
-            {
-                var hit = RunTimeBuffer[i];
-                if (hit == null) continue;
-
-                var direction = hit.transform.position - currentPosition;
-                var sqrDist = direction.sqrMagnitude;
-
-                if (sqrDist < minSqrDistance)
-                {
-                    minSqrDistance = sqrDist;
-                    nearest = hit.transform;
-                }
-            }
-
-            if (_nearestPlayer != null && nearest != null && nearest != _nearestPlayer)
-            {
-                var currentDir = _nearestPlayer.position - currentPosition;
-                var currentSqr = currentDir.sqrMagnitude;
-                var maxSqr = detectionRadius * detectionRadius;
-
-                if (currentSqr <= maxSqr)
-                {
-                    var thresholdSqr = currentSqr * targetSwitchThreshold * targetSwitchThreshold;
-                    if (minSqrDistance >= thresholdSqr)
-                    {
-                        nearest = _nearestPlayer;
-                    }
-                }
-            }
-            
-            _nearestPlayer = nearest;
-            return nearest;
-        }
-
         public void SetSpeed(float speed)
         {
             if (Object != null && Object.HasStateAuthority)
@@ -221,6 +158,67 @@ namespace _Project.Scripts.Gameplay.Enemy
         {
             enabled = false;
             StopAgent();
+        }
+
+        public Transform FindNearestPlayer()
+        {
+            if (IsSearchOnCooldown())
+                return _nearestPlayer;
+
+            SearchCooldownTimer = TickTimer.CreateFromSeconds(Runner, _config.searchIntervalSeconds);
+
+            var candidate = FindClosestPlayerInRadius(out var candidateSqrDistance);
+            
+            _nearestPlayer = ResolveTarget(candidate, candidateSqrDistance);
+            return _nearestPlayer;
+        }
+
+        private bool IsSearchOnCooldown()
+            => SearchCooldownTimer.IsRunning && !SearchCooldownTimer.Expired(Runner);
+
+        private Transform FindClosestPlayerInRadius(out float minSqrDistance)
+        {
+            minSqrDistance = Mathf.Infinity;
+
+            Array.Clear(RunTimeBuffer, 0, RunTimeBuffer.Length);
+
+            var hitCount = Physics.OverlapSphereNonAlloc(
+                transform.position, _config.detectionRadius, RunTimeBuffer, _config.playerLayer);
+
+            if (hitCount == 0)
+                return null;
+
+            Transform nearest = null;
+            var origin = transform.position;
+
+            for (var i = 0; i < hitCount; i++)
+            {
+                var hit = RunTimeBuffer[i];
+                if (hit == null) continue;
+
+                var sqrDist = (hit.transform.position - origin).sqrMagnitude;
+                if (sqrDist >= minSqrDistance) continue;
+
+                minSqrDistance = sqrDist;
+                nearest = hit.transform;
+            }
+
+            return nearest;
+        }
+
+        private Transform ResolveTarget(Transform candidate, float candidateSqrDistance)
+        {
+            if (candidate == null || _nearestPlayer == null || candidate == _nearestPlayer)
+                return candidate;
+
+            var origin = transform.position;
+            var currentSqr = (_nearestPlayer.position - origin).sqrMagnitude;
+
+            if (currentSqr > _config.detectionRadius * _config.detectionRadius)
+                return candidate;
+
+            var thresholdSqr = currentSqr * _config.targetSwitchThreshold * _config.targetSwitchThreshold;
+            return candidateSqrDistance < thresholdSqr ? candidate : _nearestPlayer;
         }
     }
 }

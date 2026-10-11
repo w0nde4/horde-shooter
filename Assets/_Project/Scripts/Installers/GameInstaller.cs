@@ -20,6 +20,7 @@ namespace _Project.Scripts.Installers
         [SerializeField] private WaveCycleConfig waveCycleConfig;
         [SerializeField] private WaveSpawnerConfig waveSpawnerConfig;
         [SerializeField] private PlayerConfig playerConfig;
+        [SerializeField] private EnemyConfig enemyConfig;
         [SerializeField] private WeaponAudioConfig weaponAudioConfig;
         [SerializeField] private WeaponVFXConfig weaponVFXConfig;
         [SerializeField] private GrenadeAudioConfig grenadeAudioConfig;
@@ -33,6 +34,7 @@ namespace _Project.Scripts.Installers
             if (waveCycleConfig == null
                 || waveSpawnerConfig == null
                 || playerConfig == null
+                || enemyConfig == null
                 || weaponAudioConfig == null
                 || weaponVFXConfig == null
                 || grenadeAudioConfig == null
@@ -49,6 +51,9 @@ namespace _Project.Scripts.Installers
                 .AsSingle();
             Container.Bind<PlayerConfig>()
                 .FromInstance(playerConfig)
+                .AsSingle();
+            Container.Bind<EnemyConfig>()
+                .FromInstance(enemyConfig)
                 .AsSingle();
             Container.Bind<WeaponAudioConfig>()
                 .FromInstance(weaponAudioConfig)

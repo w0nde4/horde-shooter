@@ -13,6 +13,8 @@ namespace _Project.Scripts.Services.Network
 {
     public class FusionNetworkService : INetworkRunnerCallbacks, IInitializable
     {
+        public const string MainMenuSceneName = "StartMenu";
+        
         private NetworkRunner _runner;
         private NetworkSceneManagerDefault _sceneManager;
         private bool _isRunning;
@@ -28,6 +30,7 @@ namespace _Project.Scripts.Services.Network
         public void Initialize()
         {
             CreateAndConfigureRunner();
+            _signalBus.Subscribe<ReturnToMainMenuForcedSignal>(OnForcedReturnToMainMenu);
         }
         
         public async UniTask StartGameInternal(GameMode gameMode, string sessionName, string gameplaySceneName, int playersCount)
@@ -85,6 +88,11 @@ namespace _Project.Scripts.Services.Network
             _runner.AddCallbacks(_provider);
             
             UnityEngine.Object.DontDestroyOnLoad(go);
+        }
+        
+        private void OnForcedReturnToMainMenu()
+        {
+            ExitToMainMenuAsync(MainMenuSceneName).Forget();
         }
 
         public async UniTask ExitToMainMenuAsync(string mainMenuSceneName)

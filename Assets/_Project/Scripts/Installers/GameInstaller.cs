@@ -118,7 +118,7 @@ namespace _Project.Scripts.Installers
                 .To<EnemySpawnService>()
                 .AsSingle();
             Container.Bind<IWaveSpawner>()
-                .To<WaveSpawner>()
+                .To<WaveEnemyController>()
                 .FromComponentInHierarchy()
                 .AsSingle();
             Container.Bind<IPlayerSpawnService>()

@@ -50,6 +50,9 @@ namespace _Project.Scripts.Installers
             Container.DeclareSignal<EnemySpawnedSignal>();
             Container.DeclareSignal<EnemyDespawnedSignal>();
             Container.DeclareSignal<GrenadeExplodedSignal>();
+            Container.DeclareSignal<PauseMenuToggledSignal>();
+            Container.DeclareSignal<ExitToMainMenuRequestedSignal>();
+            Container.DeclareSignal<ReturnToMainMenuForcedSignal>();
         }
     }
 }

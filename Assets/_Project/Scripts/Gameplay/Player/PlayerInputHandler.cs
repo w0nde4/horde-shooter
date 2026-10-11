@@ -21,12 +21,14 @@ namespace _Project.Scripts.Gameplay.Player
         private bool _isSelectionBlocked;
         private bool _isRespawnBlocked;
         private bool _isGameOverBlocked;
-        private bool IsInputBlocked => _isSelectionBlocked || _isRespawnBlocked || _isGameOverBlocked;
+        private bool _isPaused;
+        private bool IsInputBlocked => _isSelectionBlocked || _isRespawnBlocked || _isGameOverBlocked || _isPaused;
 
         private struct PlayerActions
         {
             public InputAction Move, Look, Jump, Sprint, Fire, Reload, Grenade;
             public InputAction WeaponOne, WeaponTwo, NextWeapon, PreviousWeapon;
+            public InputAction Pause;
         }
         private PlayerActions _actions;
 
@@ -51,6 +53,7 @@ namespace _Project.Scripts.Gameplay.Player
                 _signalBus.Subscribe<GameOverStartedSignal>(OnGameOverStarted);
                 _signalBus.Subscribe<PlayerRespawnStartedSignal>(OnRespawnStarted);
                 _signalBus.Subscribe<PlayerRespawnEndedSignal>(OnRespawnEnded);
+                _signalBus.Subscribe<PauseMenuToggledSignal>(OnPauseMenuToggled);
             }
         }
 
@@ -65,12 +68,14 @@ namespace _Project.Scripts.Gameplay.Player
                 _signalBus.TryUnsubscribe<GameOverStartedSignal>(OnGameOverStarted);
                 _signalBus.TryUnsubscribe<PlayerRespawnStartedSignal>(OnRespawnStarted);
                 _signalBus.TryUnsubscribe<PlayerRespawnEndedSignal>(OnRespawnEnded);
+                _signalBus.TryUnsubscribe<PauseMenuToggledSignal>(OnPauseMenuToggled);
             }
         }
         
         private void OnSelectionStarted() => _isSelectionBlocked = true;
         private void OnSelectionEnded() => _isSelectionBlocked = false;
         private void OnGameOverStarted() => _isGameOverBlocked = true;
+        private void OnPauseMenuToggled(PauseMenuToggledSignal signal) => _isPaused = signal.IsOpen;
 
         private void OnRespawnStarted(PlayerRespawnStartedSignal signal)
         {
@@ -89,6 +94,11 @@ namespace _Project.Scripts.Gameplay.Player
         private void Update()
         {
             if (!HasInputAuthority || _inputActions == null) return;
+            
+            if (_actions.Pause.WasPressedThisFrame())
+            {
+                _signalBus.Fire(new PauseMenuToggledSignal(!_isPaused));
+            }
 
             if(IsInputBlocked)
             {
@@ -179,6 +189,7 @@ namespace _Project.Scripts.Gameplay.Player
                 _actions.WeaponTwo = _inputActions.FindAction("WeaponTwo");
                 _actions.NextWeapon = _inputActions.FindAction("NextWeapon");
                 _actions.PreviousWeapon = _inputActions.FindAction("PreviousWeapon");
+                _actions.Pause = _inputActions.FindAction("Pause");
             
                 _inputActions.Enable();
             }

@@ -19,6 +19,7 @@ namespace _Project.Scripts.Services.Network
         private NetworkSceneManagerDefault _sceneManager;
         private bool _isRunning;
         private ZenjectNetworkObjectProvider _provider;
+        private bool _isExitingToMenu;
         
         [Inject] private SignalBus _signalBus;
         [Inject] private DiContainer _container;
@@ -30,7 +31,6 @@ namespace _Project.Scripts.Services.Network
         public void Initialize()
         {
             CreateAndConfigureRunner();
-            _signalBus.Subscribe<ReturnToMainMenuForcedSignal>(OnForcedReturnToMainMenu);
         }
         
         public async UniTask StartGameInternal(GameMode gameMode, string sessionName, string gameplaySceneName, int playersCount)
@@ -89,14 +89,14 @@ namespace _Project.Scripts.Services.Network
             
             UnityEngine.Object.DontDestroyOnLoad(go);
         }
-        
-        private void OnForcedReturnToMainMenu()
-        {
-            ExitToMainMenuAsync(MainMenuSceneName).Forget();
-        }
 
         public async UniTask ExitToMainMenuAsync(string mainMenuSceneName)
         {
+            _isExitingToMenu = true;
+            
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            
             if (_runner != null && _runner.IsRunning)
             {
                 await _runner.Shutdown();
@@ -105,6 +105,8 @@ namespace _Project.Scripts.Services.Network
             _isRunning = false;
             
             SceneManager.LoadScene(mainMenuSceneName);
+
+            _isExitingToMenu = false;
         }
 
         public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
@@ -131,9 +133,34 @@ namespace _Project.Scripts.Services.Network
         public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
         {
             _isRunning = false;
+            
+            if(_isExitingToMenu) return;
+
+            if (IsInGameplayScene())
+            {
+                Debug.Log($"[Network] Shutdown: {shutdownReason}. Returning to main menu.");
+                ExitToMainMenuAsync(MainMenuSceneName).Forget();
+            }
         }
 
-        public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
+        public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
+        {
+            _isRunning = false;
+
+            if (_isExitingToMenu) return;
+
+            if (IsInGameplayScene())
+            {
+                Debug.Log($"[Network] Disconnected: {reason}. Returning to main menu.");
+                ExitToMainMenuAsync(MainMenuSceneName).Forget();
+            }
+        }
+        
+        private bool IsInGameplayScene()
+        {
+            var current = SceneManager.GetActiveScene().name;
+            return current != MainMenuSceneName;
+        }
 
         public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
 

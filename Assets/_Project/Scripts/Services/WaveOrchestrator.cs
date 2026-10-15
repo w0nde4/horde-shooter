@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using _Project.Scripts.Core.Data;
 using _Project.Scripts.Core.Signals;
 using _Project.Scripts.Domain.Gameplay.Configs;
 using _Project.Scripts.Domain.Gameplay.Interfaces;
@@ -50,10 +51,19 @@ namespace _Project.Scripts.Services
             {
                 var wave = _config.waves[_currentWaveIndex];
 
-                await RunWaveDelays(wave, token);
+                _signalBus.Fire(new WaveStateChangedSignal(WaveState.Intermission, wave.waveNumber, _config.intermissionDuration));
+                await RunIntermission(wave, token);
                 if (token.IsCancellationRequested) break;
+                
+                _signalBus.Fire(new WaveStateChangedSignal(WaveState.Countdown, wave.waveNumber, _config.countdownDuration));
+                await RunCountdown(wave, token);
+                if (token.IsCancellationRequested) break;
+                
+                _signalBus.Fire(new WaveStateChangedSignal(WaveState.Fighting, wave.waveNumber));
                 await RunWave(wave, token);
                 if (token.IsCancellationRequested) break;
+                
+                _signalBus.Fire(new WaveStateChangedSignal(WaveState.Upgrade, wave.waveNumber));
                 await RunUpgradePhase(token);
 
                 _currentWaveIndex++;
@@ -61,20 +71,21 @@ namespace _Project.Scripts.Services
             }
             
             if (ct.IsCancellationRequested)
-            {
-                Debug.Log("Wave cycle cancelled.");
                 return;
-            }
 
+            _signalBus.Fire(new WaveStateChangedSignal(WaveState.Victory, _config.waves.Length));
             Debug.Log("All waves completed!");
             _signalBus.Fire<AllWavesCompletedSignal>();
         }
 
-        private async UniTask RunWaveDelays(WaveConfig wave, CancellationToken ct)
+        private async UniTask RunIntermission(WaveConfig wave, CancellationToken ct)
         {
             Debug.Log($"Wave {wave.waveNumber}: Intermission {_config.intermissionDuration} seconds...");
             await UniTask.Delay(TimeSpan.FromSeconds(_config.intermissionDuration), cancellationToken: ct);
+        }
 
+        private async UniTask RunCountdown(WaveConfig wave, CancellationToken ct)
+        {
             Debug.Log($"Wave {wave.waveNumber}: Countdown {_config.countdownDuration} seconds...");
             await UniTask.Delay(TimeSpan.FromSeconds(_config.countdownDuration), cancellationToken: ct);
         }

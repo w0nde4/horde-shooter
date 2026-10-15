@@ -24,27 +24,9 @@ namespace _Project.Scripts.Gameplay
         private void OnExitRequested()
         {
             if (!_networkService.IsRunning || _networkService.Runner == null) return;
-
-            if (_networkService.Runner.GameMode == GameMode.Single)
-            {
-                _networkService.ExitToMainMenuAsync(FusionNetworkService.MainMenuSceneName).Forget();
-                return;
-            }
-
-            if (HasStateAuthority)
-            {
-                Rpc_ForceReturnToMainMenu();
-            }
-            else
-            {
-                _networkService.ExitToMainMenuAsync(FusionNetworkService.MainMenuSceneName).Forget();
-            }
-        }
-
-        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-        private void Rpc_ForceReturnToMainMenu()
-        {
-            _signalBus.Fire<ReturnToMainMenuForcedSignal>();
+            
+            _networkService.ExitToMainMenuAsync(FusionNetworkService.MainMenuSceneName).Forget();
+            
         }
     }
 }

@@ -59,6 +59,7 @@ namespace _Project.Scripts.Installers
             Container.DeclareSignal<GameplaySettingsChangedSignal>();
             Container.DeclareSignal<VictoryStartedSignal>();
             Container.DeclareSignal<AllWavesCompletedSignal>();
+            Container.DeclareSignal<WaveStateChangedSignal>();
         }
     }
 }
